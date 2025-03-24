@@ -10,6 +10,7 @@ let cachedData = [];
 let groupData = [];
 let totalPlaying = 0;
 let totalVisits = 0;
+let totalMembers = 0;
 
 const fetchGameDetails = async () => {
   try {
@@ -42,6 +43,10 @@ const fetchGroupDetails = async () => {
       groupDetails.map(async (group) => {
         const url = `https://groups.roblox.com/v1/groups/${group.id}`;
         const response = await axios.get(url);
+        const groupData = response.data || {};
+
+        totalMembers += groupData.memberCount;
+
         return {
           ...group,
           groupDetails: response.data || {},
@@ -79,7 +84,7 @@ app.get("/proxy/groups", async (req, res) => {
 });
 
 app.get("/proxy/total", async (req, res) => {
-  res.json({ totalPlaying, totalVisits });
+  res.json({ totalPlaying, totalVisits, totalMembers });
 });
 
 const PORT = process.env.PORT || 5000;

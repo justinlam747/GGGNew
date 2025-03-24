@@ -5,4 +5,8 @@ export const details = [
 ];
 
 export const gameDetails = [{}, {}];
-export const groupDetails = [{ id: 17206753 }, { id: 32690958 }];
+export const groupDetails = [
+  { id: 17206753 },
+  { id: 33725092 },
+  { id: 35586387 },
+];
