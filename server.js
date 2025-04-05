@@ -1,91 +1,169 @@
+// server.js
 import express from "express";
 import axios from "axios";
 import cors from "cors";
+import mongoose from "mongoose";
+import dotenv from "dotenv";
 import { details, groupDetails } from "./details.js";
+import Log from "./Log.js";
+
+dotenv.config();
+
+const MONGO_URI = process.env.MONGO_URI;
 
 const app = express();
 app.use(cors({ origin: "*" }));
 
-let cachedData = [];
-let groupData = [];
-let totalPlaying = 0;
-let totalVisits = 0;
-let totalMembers = 0;
+mongoose.connect(MONGO_URI);
+mongoose.connection.once("open", () => console.log("✅ Connected to MongoDB"));
+mongoose.connection.on("error", console.error);
 
-const fetchGameDetails = async () => {
+// Utils
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const fetchWithRetry = async (url, retries = 3) => {
   try {
-    console.log("Fetching game details...");
-    const responses = await Promise.all(
-      details.map(async (game) => {
-        const url = `https://games.roblox.com/v1/games?universeIds=${game.id}`;
-        const response = await axios.get(url);
-        const gameData = response.data.data[0] || {};
-
-        totalPlaying += gameData.playing;
-        totalVisits += gameData.visits;
-        return {
-          ...game,
-          details: response.data.data[0] || {},
-        };
-      })
-    );
-
-    cachedData = responses;
-  } catch (error) {
-    console.error("Error fetching game details:", error.message);
+    return await axios.get(url);
+  } catch (err) {
+    if (err.response?.status === 429 && retries > 0) {
+      console.warn("⏳ Rate limited. Retrying...");
+      await sleep(1000);
+      return fetchWithRetry(url, retries - 1);
+    } else {
+      throw err;
+    }
   }
 };
 
-const fetchGroupDetails = async () => {
+// Main fetch function
+const fetchAllData = async () => {
   try {
-    console.log("Fetching group details...");
-    const responses = await Promise.all(
-      groupDetails.map(async (group) => {
-        const url = `https://groups.roblox.com/v1/groups/${group.id}`;
-        const response = await axios.get(url);
-        const groupData = response.data || {};
+    console.log("🔄 Fetching all Roblox data...");
 
-        totalMembers += groupData.memberCount;
+    const gameResults = [];
+    for (const game of details) {
+      const url = `https://games.roblox.com/v1/games?universeIds=${game.id}`;
+      try {
+        const response = await fetchWithRetry(url);
+        const data = response.data.data[0] || {};
+        gameResults.push({
+          universeId: game.id,
+          name: game.name,
+          ...data,
+        });
+      } catch (err) {
+        console.warn(`⚠️ Game fetch failed: ${game.name}`, err.message);
+      }
+      await sleep(250);
+    }
 
-        return {
-          ...group,
+    const totalPlaying = gameResults.reduce(
+      (sum, g) => sum + (g.playing || 0),
+      0
+    );
+    const totalVisits = gameResults.reduce(
+      (sum, g) => sum + (g.visits || 0),
+      0
+    );
+
+    const groupResults = [];
+    for (const group of groupDetails) {
+      const url = `https://groups.roblox.com/v1/groups/${group.id}`;
+      try {
+        const response = await fetchWithRetry(url);
+        groupResults.push({
+          id: group.id,
+          name: group.name,
           groupDetails: response.data || {},
-        };
-      })
+        });
+      } catch (err) {
+        console.warn(`⚠️ Group fetch failed: ${group.name}`, err.message);
+      }
+      await sleep(250);
+    }
+
+    const totalMembers = groupResults.reduce(
+      (sum, g) => sum + (g.groupDetails.memberCount || 0),
+      0
     );
 
-    groupData = responses;
+    const imageResults = [];
+    for (const game of details) {
+      const url = `https://games.roblox.com/v2/games/${game.id}/media?fetchAllExperienceRelatedMedia=false`;
+      try {
+        const response = await fetchWithRetry(url);
+        imageResults.push({
+          id: game.id,
+          name: game.name,
+          media: response.data.data || [],
+        });
+      } catch (err) {
+        console.warn(`⚠️ Image fetch failed: ${game.name}`, err.message);
+      }
+      await sleep(250);
+    }
+
+    await Log.create({
+      timestamp: new Date(),
+      games: gameResults,
+      groups: groupResults,
+      images: imageResults,
+      totalPlaying,
+      totalVisits,
+      totalMembers,
+    });
+
+    console.log("✅ Log saved to MongoDB.");
   } catch (error) {
-    console.error("Error fetching group details:", error.message);
+    console.error("❌ Fetch failed:", error.message);
   }
 };
 
-fetchGroupDetails();
-setInterval(fetchGroupDetails, 60 * 60 * 1000);
-fetchGameDetails();
-setInterval(fetchGameDetails, 60 * 60 * 1000);
+// Initial fetch and interval
+fetchAllData();
+setInterval(fetchAllData, 60 * 60 * 1000); // every hour
 
-app.get("/proxy/games", async (req, res) => {
-  if (cachedData.length === 0) {
-    return res
-      .status(503)
-      .json({ error: "Data is still loading, try again later." });
-  }
-  res.json(cachedData);
+// Routes
+app.get("/proxy/latest", async (_, res) => {
+  const latest = await Log.findOne().sort({ timestamp: -1 });
+  if (!latest)
+    return res.status(503).json({ error: "Data not available yet." });
+  res.json(latest);
 });
 
-app.get("/proxy/groups", async (req, res) => {
-  if (groupData.length === 0) {
-    return res
-      .status(503)
-      .json({ error: "Data is still loading, try again later." });
-  }
-  res.json(groupData);
+app.get("/proxy/logs", async (_, res) => {
+  const logs = await Log.find().sort({ timestamp: -1 });
+  res.json(logs);
 });
 
-app.get("/proxy/total", async (req, res) => {
+app.get("/proxy/groups", async (_, res) => {
+  const latest = await Log.findOne().sort({ timestamp: -1 });
+  if (!latest)
+    return res.status(503).json({ error: "Data not available yet." });
+  res.json(latest.groups);
+});
+
+app.get("/proxy/images", async (_, res) => {
+  const latest = await Log.findOne().sort({ timestamp: -1 });
+  if (!latest)
+    return res.status(503).json({ error: "Data not available yet." });
+  res.json(latest.images);
+});
+
+app.get("/proxy/total", async (_, res) => {
+  const latest = await Log.findOne().sort({ timestamp: -1 });
+  if (!latest)
+    return res.status(503).json({ error: "Data not available yet." });
+  const { totalPlaying, totalVisits, totalMembers } = latest;
   res.json({ totalPlaying, totalVisits, totalMembers });
 });
 
+app.get("/", async (_, res) => {
+  res.json(
+    "Hello World this is ggg backend if ur not ggg uhhh u probably don't have the endpoints so this is kind of useless soz!"
+  );
+});
+
+// Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
