@@ -89,7 +89,7 @@ const fetchAllData = async () => {
 
     const imageResults = [];
     for (const game of details) {
-      const url = `https://thumbnails.roblox.com/v1/games/icons?universeIds=${game.id}}&size=150x150&format=Png&isCircular=false
+      const url = `https://thumbnails.roblox.com/v1/games/icons?universeIds=${game.id}&size=150x150&format=Png&isCircular=false
 `;
       try {
         const response = await fetchWithRetry(url);
