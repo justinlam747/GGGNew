@@ -165,6 +165,32 @@ app.get("/", async (_, res) => {
   );
 });
 
+app.get("/proxy/all", async (_, res) => {
+  try {
+    const latest = await Log.findOne().sort({ timestamp: -1 });
+    if (!latest) {
+      return res.status(503).json({ error: "Data not available yet." });
+    }
+
+    const { games, groups, images, totalPlaying, totalVisits, totalMembers } =
+      latest;
+
+    res.json({
+      gameData: games,
+      groupData: groups,
+      gameImages: images,
+      totalData: {
+        totalPlaying,
+        totalVisits,
+        totalMembers,
+      },
+    });
+  } catch (error) {
+    console.error("❌ Combined route failed:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
