@@ -18,7 +18,7 @@ mongoose.connect(MONGO_URI);
 mongoose.connection.once("open", () => console.log("✅ Connected to MongoDB"));
 mongoose.connection.on("error", console.error);
 
-// Utils
+
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const fetchWithRetry = async (url, retries = 3) => {
@@ -189,6 +189,11 @@ app.get("/proxy/all", async (_, res) => {
     console.error("❌ Combined route failed:", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
+});
+
+app.post("/proxy/refresh", async (_, res) => {
+  await fetchAllData();
+  res.json({ message: "Manually refreshed data." });
 });
 
 // Start server
