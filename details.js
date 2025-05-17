@@ -3,7 +3,7 @@ export const details = [
   { id: 7230509689, name: "Find the Seals", show: true },
   { id: 7335437420, name: "Find the Hamsters", show: true },
   { id: 7390254166, name: "Find the Floppas", show: true},
-  { id: 7692815280, name: "Tung Tung", show: true},
+  { id: 7584759903, name: "Tung Tung", show: true},
 ];
 
 export const gameDetails = [{}, {}];
