@@ -16,8 +16,17 @@ const MONGO_URI = process.env.MONGO_URI;
 const app = express();
 
 // Security and performance middleware
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000', 'https://yourdomain.com'];
-app.use(cors({ origin: allowedOrigins }));
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
+  'http://localhost:3000', 
+  'https://glazinggorillagames.com',
+  'https://www.glazinggorillagames.com'
+];
+app.use(cors({ 
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 
