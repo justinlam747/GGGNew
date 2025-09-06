@@ -15,13 +15,16 @@ const MONGO_URI = process.env.MONGO_URI;
 
 const app = express();
 
+// Trust proxy for Render deployment
+app.set('trust proxy', 1);
+
 // Security and performance middleware
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
-  'http://localhost:3000', 
+  'http://localhost:3000',
   'https://glazinggorillagames.com',
   'https://www.glazinggorillagames.com'
 ];
-app.use(cors({ 
+app.use(cors({
   origin: allowedOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -41,7 +44,7 @@ app.use('/proxy', limiter);
 // In-memory cache for latest data
 let cachedLatestData = null;
 let cacheTimestamp = null;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes for better performance on Render
 
 mongoose.connect(MONGO_URI);
 mongoose.connection.once("open", () => console.log("✅ Connected to MongoDB"));
@@ -52,12 +55,23 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const fetchWithRetry = async (url, retries = 3) => {
   try {
-    const response = await axios.get(url, { timeout: 10000 });
+    const response = await axios.get(url, {
+      timeout: 15000,
+      headers: {
+        'User-Agent': 'GGGBackend/1.0',
+        'Accept': 'application/json'
+      }
+    });
     return response;
   } catch (err) {
     if (err.response?.status === 429 && retries > 0) {
-      console.warn("⏳ Rate limited. Retrying...");
-      await sleep(1000);
+      const delay = Math.pow(2, 3 - retries) * 1000; // Exponential backoff
+      console.warn(`⏳ Rate limited. Retrying in ${delay}ms...`);
+      await sleep(delay);
+      return fetchWithRetry(url, retries - 1);
+    } else if (err.response?.status >= 500 && retries > 0) {
+      console.warn(`⚠️ Server error ${err.response.status}. Retrying...`);
+      await sleep(2000);
       return fetchWithRetry(url, retries - 1);
     } else {
       throw err;
@@ -66,7 +80,7 @@ const fetchWithRetry = async (url, retries = 3) => {
 };
 
 // Concurrent fetch with rate limiting
-const fetchConcurrentWithLimit = async (urls, maxConcurrent = 3) => {
+const fetchConcurrentWithLimit = async (urls, maxConcurrent = 2) => {
   const results = [];
   for (let i = 0; i < urls.length; i += maxConcurrent) {
     const batch = urls.slice(i, i + maxConcurrent);
@@ -79,19 +93,19 @@ const fetchConcurrentWithLimit = async (urls, maxConcurrent = 3) => {
         return null;
       }
     });
-    
+
     const batchResults = await Promise.all(batchPromises);
     results.push(...batchResults.filter(Boolean));
-    
-    // Rate limiting between batches
+
+    // Longer delay between batches to avoid rate limiting
     if (i + maxConcurrent < urls.length) {
-      await sleep(500);
+      await sleep(2000);
     }
   }
   return results;
 };
 
-// Cache management
+// Cache management with longer duration for Render
 const getCachedData = () => {
   if (cachedLatestData && cacheTimestamp && (Date.now() - cacheTimestamp < CACHE_DURATION)) {
     return cachedLatestData;
@@ -103,6 +117,35 @@ const setCachedData = (data) => {
   cachedLatestData = data;
   cacheTimestamp = Date.now();
 };
+
+// Fallback data structure for when APIs fail
+const createFallbackData = () => ({
+  timestamp: new Date(),
+  games: details.map(game => ({
+    universeId: game.id,
+    name: game.name,
+    playing: 0,
+    visits: 0,
+    created: null,
+    updated: null,
+    maxPlayers: 0,
+    isActive: false
+  })),
+  groups: groupDetails.map(group => ({
+    id: group.id,
+    name: 'Group',
+    groupDetails: { memberCount: 0 }
+  })),
+  images: details.map(game => ({
+    id: game.id,
+    name: game.name,
+    media: []
+  })),
+  totalPlaying: 0,
+  totalVisits: 0,
+  totalMembers: 0,
+  isFallback: true
+});
 
 // Main fetch function with concurrent requests
 const fetchAllData = async () => {
@@ -137,44 +180,76 @@ const fetchAllData = async () => {
       })
     }));
 
-    // Fetch all data concurrently
+    // Fetch all data with reduced concurrency to avoid rate limiting
     const [gameResults, groupResults, imageResults] = await Promise.all([
-      fetchConcurrentWithLimit(gameUrls, 3),
-      fetchConcurrentWithLimit(groupUrls, 3),
-      fetchConcurrentWithLimit(imageUrls, 3)
+      fetchConcurrentWithLimit(gameUrls, 2),
+      fetchConcurrentWithLimit(groupUrls, 2),
+      fetchConcurrentWithLimit(imageUrls, 2)
     ]);
 
-    // Calculate totals
-    const totalPlaying = gameResults.reduce((sum, g) => sum + (g.playing || 0), 0);
-    const totalVisits = gameResults.reduce((sum, g) => sum + (g.visits || 0), 0);
-    const totalMembers = groupResults.reduce((sum, g) => sum + (g.groupDetails.memberCount || 0), 0);
+    // Calculate totals with fallback for missing data
+    const totalPlaying = gameResults.reduce((sum, g) => sum + (g?.playing || 0), 0);
+    const totalVisits = gameResults.reduce((sum, g) => sum + (g?.visits || 0), 0);
+    const totalMembers = groupResults.reduce((sum, g) => sum + (g?.groupDetails?.memberCount || 0), 0);
 
     const logData = {
       timestamp: new Date(),
-      games: gameResults,
-      groups: groupResults,
-      images: imageResults,
+      games: gameResults.length > 0 ? gameResults : details.map(game => ({
+        universeId: game.id,
+        name: game.name,
+        playing: 0,
+        visits: 0
+      })),
+      groups: groupResults.length > 0 ? groupResults : groupDetails.map(group => ({
+        id: group.id,
+        name: 'Group',
+        groupDetails: { memberCount: 0 }
+      })),
+      images: imageResults.length > 0 ? imageResults : details.map(game => ({
+        id: game.id,
+        name: game.name,
+        media: []
+      })),
       totalPlaying,
       totalVisits,
       totalMembers,
     };
 
     // Save to database
-    await Log.create(logData);
-    
+    try {
+      await Log.create(logData);
+      console.log("✅ Log saved to MongoDB and cache updated.");
+    } catch (dbError) {
+      console.warn("⚠️ Database save failed:", dbError.message);
+    }
+
     // Update cache
     setCachedData(logData);
 
-    console.log("✅ Log saved to MongoDB and cache updated.");
     return logData;
   } catch (error) {
     console.error("❌ Fetch failed:", error.message);
-    throw error;
+
+    // Use fallback data when all APIs fail
+    const fallbackData = createFallbackData();
+    setCachedData(fallbackData);
+
+    try {
+      await Log.create(fallbackData);
+      console.log("✅ Fallback data saved to MongoDB.");
+    } catch (dbError) {
+      console.warn("⚠️ Fallback database save failed:", dbError.message);
+    }
+
+    return fallbackData;
   }
 };
 
-// Initial fetch and interval
-fetchAllData();
+// Initial fetch with delay to prevent cold start issues
+setTimeout(() => {
+  fetchAllData();
+}, 5000); // 5 second delay for Render cold starts
+
 setInterval(fetchAllData, 60 * 60 * 1000); // every hour
 
 // Error handling middleware
@@ -187,39 +262,39 @@ app.get("/proxy/latest", asyncHandler(async (_, res) => {
   // Try cache first
   const cached = getCachedData();
   if (cached) {
-    res.set('Cache-Control', 'public, max-age=300'); // 5 minutes
+    res.set('Cache-Control', 'public, max-age=900'); // 15 minutes
     return res.json(cached);
   }
-  
+
   // Fallback to database
   const latest = await Log.findOne().sort({ timestamp: -1 });
   if (!latest) {
     return res.status(503).json({ error: "Data not available yet." });
   }
-  
+
   setCachedData(latest);
-  res.set('Cache-Control', 'public, max-age=300');
+  res.set('Cache-Control', 'public, max-age=900');
   res.json(latest);
 }));
 
 app.get("/proxy/logs", asyncHandler(async (_, res) => {
   const logs = await Log.find().sort({ timestamp: -1 }).limit(50); // Limit for performance
-  res.set('Cache-Control', 'public, max-age=300');
+  res.set('Cache-Control', 'public, max-age=900');
   res.json(logs);
 }));
 
 app.get("/proxy/groups", asyncHandler(async (_, res) => {
   const cached = getCachedData();
   if (cached) {
-    res.set('Cache-Control', 'public, max-age=300');
+    res.set('Cache-Control', 'public, max-age=900');
     return res.json(cached.groups);
   }
-  
+
   const latest = await Log.findOne().sort({ timestamp: -1 });
   if (!latest) {
     return res.status(503).json({ error: "Data not available yet." });
   }
-  
+
   setCachedData(latest);
   res.set('Cache-Control', 'public, max-age=300');
   res.json(latest.groups);
@@ -228,15 +303,15 @@ app.get("/proxy/groups", asyncHandler(async (_, res) => {
 app.get("/proxy/images", asyncHandler(async (_, res) => {
   const cached = getCachedData();
   if (cached) {
-    res.set('Cache-Control', 'public, max-age=300');
+    res.set('Cache-Control', 'public, max-age=900');
     return res.json(cached.images);
   }
-  
+
   const latest = await Log.findOne().sort({ timestamp: -1 });
   if (!latest) {
     return res.status(503).json({ error: "Data not available yet." });
   }
-  
+
   setCachedData(latest);
   res.set('Cache-Control', 'public, max-age=300');
   res.json(latest.images);
@@ -246,15 +321,15 @@ app.get("/proxy/total", asyncHandler(async (_, res) => {
   const cached = getCachedData();
   if (cached) {
     const { totalPlaying, totalVisits, totalMembers } = cached;
-    res.set('Cache-Control', 'public, max-age=300');
+    res.set('Cache-Control', 'public, max-age=900');
     return res.json({ totalPlaying, totalVisits, totalMembers });
   }
-  
+
   const latest = await Log.findOne().sort({ timestamp: -1 });
   if (!latest) {
     return res.status(503).json({ error: "Data not available yet." });
   }
-  
+
   setCachedData(latest);
   const { totalPlaying, totalVisits, totalMembers } = latest;
   res.set('Cache-Control', 'public, max-age=300');
@@ -271,7 +346,7 @@ app.get("/proxy/all", asyncHandler(async (_, res) => {
   const cached = getCachedData();
   if (cached) {
     const { games, groups, images, totalPlaying, totalVisits, totalMembers } = cached;
-    res.set('Cache-Control', 'public, max-age=300');
+    res.set('Cache-Control', 'public, max-age=900');
     return res.json({
       gameData: games,
       groupData: groups,
@@ -279,12 +354,12 @@ app.get("/proxy/all", asyncHandler(async (_, res) => {
       totalData: { totalPlaying, totalVisits, totalMembers },
     });
   }
-  
+
   const latest = await Log.findOne().sort({ timestamp: -1 });
   if (!latest) {
     return res.status(503).json({ error: "Data not available yet." });
   }
-  
+
   setCachedData(latest);
   const { games, groups, images, totalPlaying, totalVisits, totalMembers } = latest;
   res.set('Cache-Control', 'public, max-age=300');
@@ -303,8 +378,8 @@ app.post("/proxy/refresh", asyncHandler(async (_, res) => {
 
 // Health check endpoint
 app.get("/health", (_, res) => {
-  res.json({ 
-    status: "healthy", 
+  res.json({
+    status: "healthy",
     timestamp: new Date(),
     cache: {
       hasData: !!cachedLatestData,
