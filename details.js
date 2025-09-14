@@ -8,7 +8,7 @@ export const details = [
   { id: 7584759903, name: "Tung Tung", show: true},
   { id: 7813968568, name: "Escape Gubby", show: true},
   { id: 8591811455, name: "Escape Green Bean", show: true},
- 
+
 ];
 
 export const gameDetails = [{}, {}];
