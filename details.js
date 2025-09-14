@@ -6,6 +6,7 @@ export const details = [
   { id: 7584759903, name: "Tung Tung", show: true},
   { id: 7813968568, name: "Tung Tung 1", show: true},
   { id: 7739421854, name: "Tung Tung 2", show: true},
+  { id: 8591811455, name: "Escape Green Bean", show: true},
  
 ];
 
