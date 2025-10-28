@@ -3,6 +3,7 @@ import axios from 'axios';
 import { RefreshCw } from 'lucide-react';
 import DetailedLineChart from './charts/DetailedLineChart';
 import { Button } from '../ui/button';
+import { getApiBaseUrl } from '../../utils/api';
 
 // Helper to convert time range to dates
 const getDateRange = (range) => {
@@ -21,7 +22,7 @@ const DetailedGames = () => {
   const [loading, setLoading] = useState(true);
   const [metric, setMetric] = useState('playing'); // Single metric selector
 
-  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5001';
+  const API_BASE = getApiBaseUrl();
 
   // Fetch games list from CMS
   useEffect(() => {

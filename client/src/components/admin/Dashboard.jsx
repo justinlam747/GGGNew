@@ -3,12 +3,13 @@ import { RefreshCw } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useDashboard } from '../../context/DashboardContext';
 import PieChart from './charts/PieChart';
+import { getApiBaseUrl } from '../../utils/api';
 
 const Dashboard = () => {
   const { overview, loading, refresh, lastFetch } = useDashboard();
   const [pieMetric, setPieMetric] = useState('visits'); // visits, playing, or favorites
   const [refreshingLandingPage, setRefreshingLandingPage] = useState(false);
-  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5001';
+  const API_BASE = getApiBaseUrl();
 
   const handleRefresh = () => {
     refresh();

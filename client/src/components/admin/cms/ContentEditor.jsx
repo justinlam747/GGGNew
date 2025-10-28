@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Save } from 'lucide-react';
 import { Button } from '../../ui/button';
+import { getApiBaseUrl } from '../../../utils/api';
 
 const ContentEditor = () => {
   const [content, setContent] = useState([]);
@@ -9,7 +10,7 @@ const ContentEditor = () => {
   const [saving, setSaving] = useState(false);
   const [selectedSection, setSelectedSection] = useState(null);
 
-  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5001';
+  const API_BASE = getApiBaseUrl();
 
   useEffect(() => {
     fetchContent();

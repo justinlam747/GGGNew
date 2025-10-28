@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Plus, Edit2, Trash2, Star, Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { Button } from '../../ui/button';
 import { useGameData } from '../../../context/GameContext';
+import { getApiBaseUrl } from '../../../utils/api';
 
 const GamesManager = () => {
   const [games, setGames] = useState([]);
@@ -14,7 +15,7 @@ const GamesManager = () => {
   // Get refetch function from GameContext
   const { refetch } = useGameData();
 
-  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5001';
+  const API_BASE = getApiBaseUrl();
 
   useEffect(() => {
     fetchGames();

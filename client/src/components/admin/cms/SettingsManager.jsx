@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Save } from 'lucide-react';
 import { Button } from '../../ui/button';
+import { getApiBaseUrl } from '../../../utils/api';
 
 const SettingsManager = () => {
   const [settings, setSettings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5001';
+  const API_BASE = getApiBaseUrl();
 
   useEffect(() => {
     fetchSettings();

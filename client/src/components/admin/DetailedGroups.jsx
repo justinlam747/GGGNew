@@ -3,6 +3,7 @@ import axios from 'axios';
 import { RefreshCw } from 'lucide-react';
 import DetailedGroupChart from './charts/DetailedGroupChart';
 import { Button } from '../ui/button';
+import { getApiBaseUrl } from '../../utils/api';
 
 // Helper to convert time range to dates
 const getDateRange = (range) => {
@@ -20,7 +21,7 @@ const DetailedGroups = () => {
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5001';
+  const API_BASE = getApiBaseUrl();
 
   // Fetch groups list from CMS
   useEffect(() => {
