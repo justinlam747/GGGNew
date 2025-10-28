@@ -15,7 +15,9 @@ services:
         generateValue: true # Render will auto-generate a secure secret
       - key: ALLOWED_ORIGINS
         value: https://ggg-analytics-platform.onrender.com,https://glazinggorillagames.com
+      - key: SQLITE_PATH
+        value: /var/data/ggg.db
     disk:
       name: ggg-database
-      mountPath: /opt/render/project/src/server/database
+      mountPath: /var/data
       sizeGB: 1
