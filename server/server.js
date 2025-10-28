@@ -76,11 +76,26 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
   'http://localhost:5000',
   'https://glazinggorillagames.com',
   'https://www.glazinggorillagames.com',
-  'https://gggnew.onrender.com/admin'
+  'https://gggnew.onrender.com',
+  'https://gggnew.onrender.com/admin',
+  'https://gggnew.onrender.com/admin/dashboard',
+  'https://gggnew.onrender.com/admin/games/detailed',
+  'https://gggnew.onrender.com/admin/groups/detailed',
+  'https://gggnew.onrender.com/admin/cms'
 ];
 
 app.use(cors({
-  origin: allowedOrigins,
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, Postman, or same-origin)
+    if (!origin) return callback(null, true);
+
+    // Check if origin is in allowed list or matches the domain
+    if (allowedOrigins.includes(origin) || origin.startsWith('https://gggnew.onrender.com')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -105,7 +120,8 @@ app.use(session({
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax' // Allow cross-site cookies in production
   }
 }));
 
