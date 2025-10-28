@@ -510,11 +510,12 @@ app.use(express.static(path.join(__dirname, '../client/dist')));
 // Catch-all route for React Router (must be AFTER all API routes)
 app.get('*', (req, res) => {
   // Don't catch API routes - allow API routes to return 404 if not found
-  if (req.path.startsWith('/api') || req.path.startsWith('/admin') || req.path.startsWith('/proxy') || req.path.startsWith('/health')) {
+  // Note: /admin frontend routes should be served by React, only /api routes should 404
+  if (req.path.startsWith('/api') || req.path.startsWith('/proxy') || req.path.startsWith('/health')) {
     return res.status(404).json({ error: 'Not found' });
   }
 
-  // Send React app for all other routes
+  // Send React app for all other routes (including /admin frontend pages)
   res.sendFile(path.join(__dirname, '../client/dist/index.html'));
 });
 
