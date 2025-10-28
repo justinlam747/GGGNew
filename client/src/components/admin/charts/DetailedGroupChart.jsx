@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 
-const DetailedGroupChart = ({ data }) => {
+const DetailedGroupChart = ({ data, selectedGroup }) => {
   const svgRef = useRef();
 
   useEffect(() => {
@@ -20,11 +20,25 @@ const DetailedGroupChart = ({ data }) => {
       .append('g')
       .attr('transform', `translate(${margin.left},${margin.top})`);
 
-    // Process data - reverse to get chronological order
-    const processedData = data.map(d => ({
-      date: new Date(d.date),
-      members: d.members || 0
-    })).reverse();
+    // Process data - handle different data formats and aggregate if needed
+    const processedData = selectedGroup
+      ? data.map(d => ({
+          date: new Date(d.timestamp || d.date),
+          members: d.memberCount || d.member_count || d.members || 0
+        })).reverse()
+      : data.reduce((acc, d) => {
+          const timestamp = new Date(d.timestamp || d.date);
+          const existing = acc.find(item => item.date.getTime() === timestamp.getTime());
+          if (existing) {
+            existing.members += d.memberCount || d.member_count || d.members || 0;
+          } else {
+            acc.push({
+              date: timestamp,
+              members: d.memberCount || d.member_count || d.members || 0
+            });
+          }
+          return acc;
+        }, []).sort((a, b) => a.date - b.date);
 
     if (processedData.length === 0) return;
 
@@ -127,7 +141,7 @@ const DetailedGroupChart = ({ data }) => {
       .attr('fill', 'white')
       .text('Members');
 
-  }, [data]);
+  }, [data, selectedGroup]);
 
   return (
     <div className="flex justify-center">

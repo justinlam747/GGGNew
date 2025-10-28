@@ -10,7 +10,6 @@ import GameDetail from "./components/GameDetail.jsx";
 import AdminLogin from "./components/admin/Login.jsx";
 import AdminLayout from "./components/admin/AdminLayout.jsx";
 import AdminDashboard from "./components/admin/Dashboard.jsx";
-import AdminGames from "./components/admin/Games.jsx";
 import DetailedGames from "./components/admin/DetailedGames.jsx";
 import DetailedGroups from "./components/admin/DetailedGroups.jsx";
 import CMS from "./components/admin/CMS.jsx";
@@ -40,7 +39,6 @@ const App = () => {
                   <Route path="login" element={<AdminLogin />} />
                   <Route path="/" element={<AdminLayout />}>
                     <Route path="dashboard" element={<AdminDashboard />} />
-                    <Route path="games" element={<AdminGames />} />
                     <Route path="games/detailed" element={<DetailedGames />} />
                     <Route path="groups/detailed" element={<DetailedGroups />} />
                     <Route path="cms" element={<CMS />} />

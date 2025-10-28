@@ -11,8 +11,7 @@ const CMS = () => {
   const tabs = [
     { id: 'games', label: 'Games', icon: Gamepad2, component: GamesManager },
     { id: 'groups', label: 'Groups', icon: Users, component: GroupsManager },
-    { id: 'content', label: 'Content', icon: FileText, component: ContentEditor },
-    { id: 'settings', label: 'Settings', icon: Settings, component: SettingsManager }
+    
   ];
 
   const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component;

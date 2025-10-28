@@ -80,7 +80,7 @@ const GameCard = memo(({ image, title, visits, players, rootPlaceId }) => {
         <img
           src={image}
           alt={title}
-          className="h-full w-full object-cover transition-transform duration-500 will-change-transform group-hover:scale-105"
+          className="h-full rounded-t-3xl w-full object-cover transition-transform duration-500 will-change-transform group-hover:scale-105"
           loading="lazy"
           decoding="async"
         />
@@ -111,7 +111,7 @@ const GameCard = memo(({ image, title, visits, players, rootPlaceId }) => {
       </div>
 
       {/* subtle inner ring */}
-      <div className="pointer-events-none absolute inset-0 rounded-3xl ring-1 ring-white/10" />
+      {/* <div className="pointer-events-none absolute inset-0 rounded-3xl ring-1 ring-white/10" /> */}
     </a>
   );
 });

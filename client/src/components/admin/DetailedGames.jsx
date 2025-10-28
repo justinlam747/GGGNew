@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { TrendingUp, TrendingDown, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import DetailedLineChart from './charts/DetailedLineChart';
 import { Button } from '../ui/button';
 
@@ -13,13 +13,13 @@ const getDateRange = (range) => {
 };
 
 const DetailedGames = () => {
-  const [selectedGames, setSelectedGames] = useState([]); // Multiple selection
+  const [selectedGame, setSelectedGame] = useState('all'); // Single selection (game ID or 'all')
   const [timeRange, setTimeRange] = useState('7d');
   const [gamesList, setGamesList] = useState([]);
   const [allGamesStats, setAllGamesStats] = useState([]);
-  const [chartData, setChartData] = useState({});
+  const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [metric, setMetric] = useState('playing'); // playing, visits, favorites, likes
+  const [metric, setMetric] = useState('playing'); // Single metric selector
 
   const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5001';
 
@@ -61,53 +61,30 @@ const DetailedGames = () => {
   // Fetch chart data when selection or time range changes
   useEffect(() => {
     fetchChartData();
-  }, [selectedGames, timeRange]);
+  }, [selectedGame, timeRange]);
 
   const fetchChartData = async () => {
     setLoading(true);
     try {
-      if (selectedGames.length === 0) {
+      if (selectedGame === 'all') {
         // Overall view - fetch aggregated data
         const hours = timeRange === '7d' ? 168 : timeRange === '30d' ? 720 : timeRange === '90d' ? 2160 : 8760;
         const response = await axios.get(`${API_BASE}/admin/analytics/history?hours=${hours}`, { withCredentials: true });
-        setChartData({ overall: response.data });
+        setChartData(response.data);
       } else {
-        // Fetch data for each selected game
+        // Fetch data for selected game
         const { start, end } = getDateRange(timeRange);
-        const promises = selectedGames.map(gameId =>
-          axios.get(
-            `${API_BASE}/admin/analytics/games?universeId=${gameId}&startDate=${start}&endDate=${end}`,
-            { withCredentials: true }
-          )
+        const response = await axios.get(
+          `${API_BASE}/admin/analytics/games?universeId=${selectedGame}&startDate=${start}&endDate=${end}`,
+          { withCredentials: true }
         );
-        const results = await Promise.all(promises);
-        const data = {};
-        results.forEach((res, index) => {
-          data[selectedGames[index]] = res.data;
-        });
-        setChartData(data);
+        setChartData(response.data);
       }
     } catch (error) {
       console.error('Error fetching chart data:', error);
     } finally {
       setLoading(false);
     }
-  };
-
-  const toggleGameSelection = (gameId) => {
-    setSelectedGames(prev =>
-      prev.includes(gameId)
-        ? prev.filter(id => id !== gameId)
-        : [...prev, gameId]
-    );
-  };
-
-  const selectAllGames = () => {
-    setSelectedGames(gamesList.map(g => g.id));
-  };
-
-  const clearSelection = () => {
-    setSelectedGames([]);
   };
 
   const handleRefresh = () => {
@@ -126,6 +103,12 @@ const DetailedGames = () => {
     activeGames: allGamesStats.filter(g => g.playing > 0).length
   };
 
+  const metricLabels = {
+    playing: 'Current Players vs Time',
+    visits: 'Total Visits vs Time',
+    favorites: 'Favorites vs Time'
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -140,6 +123,25 @@ const DetailedGames = () => {
         </Button>
       </div>
 
+    {/* Chart */}
+      {loading ? (
+        <div className="flex items-center justify-center h-64 text-white bg-neutral-900 rounded-lg">
+          <div className="text-lg">Loading chart data...</div>
+        </div>
+      ) : (
+        <div className="bg-neutral-900 p-6 rounded-lg">
+          <h2 className="text-xl font-bold text-white mb-4">
+            {selectedGame === 'all'
+              ? `Overall ${metricLabels[metric]} (All Games)`
+              : `${gamesList.find(g => g.id === parseInt(selectedGame))?.name || 'Game'} - ${metricLabels[metric]}`}
+          </h2>
+          <DetailedLineChart
+            data={chartData}
+            selectedGame={selectedGame === 'all' ? null : selectedGame}
+            metric={metric}
+          />
+        </div>
+      )}
       {/* Overall KPIs */}
       <div className="bg-neutral-900 p-6 rounded-lg">
         <h2 className="text-xl font-bold text-white mb-4">Overall KPIs</h2>
@@ -171,64 +173,25 @@ const DetailedGames = () => {
         </div>
       </div>
 
-      {/* All Games Table */}
+      {/* Game Selection & Controls */}
       <div className="bg-neutral-900 p-6 rounded-lg">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-white">All Games</h2>
-          <div className="flex gap-2">
-            <Button onClick={selectAllGames} className="bg-neutral-800 text-white text-sm px-3 py-1">
-              Select All
-            </Button>
-            <Button onClick={clearSelection} className="bg-neutral-800 text-white text-sm px-3 py-1">
-              Clear
-            </Button>
-          </div>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-white/10">
-                <th className="text-left p-3 text-white font-medium">Select</th>
-                <th className="text-left p-3 text-white font-medium">Game Name</th>
-                <th className="text-right p-3 text-white font-medium">Playing Now</th>
-                <th className="text-right p-3 text-white font-medium">Total Visits</th>
-                <th className="text-right p-3 text-white font-medium">Favorites</th>
-                <th className="text-right p-3 text-white font-medium">Likes</th>
-                <th className="text-right p-3 text-white font-medium">Universe ID</th>
-              </tr>
-            </thead>
-            <tbody>
-              {allGamesStats.map((game) => (
-                <tr key={game.id} className="border-b border-white/10 hover:bg-white/5">
-                  <td className="p-3">
-                    <input
-                      type="checkbox"
-                      checked={selectedGames.includes(game.id)}
-                      onChange={() => toggleGameSelection(game.id)}
-                      className="w-4 h-4 cursor-pointer"
-                    />
-                  </td>
-                  <td className="p-3 text-white font-medium">{game.name}</td>
-                  <td className="p-3 text-right text-white">{(game.playing || 0).toLocaleString()}</td>
-                  <td className="p-3 text-right text-white">{(game.visits || 0).toLocaleString()}</td>
-                  <td className="p-3 text-right text-white">{(game.favorites || 0).toLocaleString()}</td>
-                  <td className="p-3 text-right text-white">{(game.likes || 0).toLocaleString()}</td>
-                  <td className="p-3 text-right text-white/50">{game.id}</td>
-                </tr>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Game Selector */}
+          <div>
+            <label className="block text-white text-sm font-medium mb-2">Select Game</label>
+            <select
+              value={selectedGame}
+              onChange={(e) => setSelectedGame(e.target.value)}
+              className="w-full bg-black text-white border border-white/20 rounded px-4 py-2"
+            >
+              <option value="all">All Games (Overall)</option>
+              {gamesList.map(game => (
+                <option key={game.id} value={game.id}>{game.name}</option>
               ))}
-            </tbody>
-          </table>
-        </div>
-        <p className="text-white/50 text-sm mt-4">
-          {selectedGames.length > 0
-            ? `${selectedGames.length} game${selectedGames.length > 1 ? 's' : ''} selected for chart comparison`
-            : 'Select games to compare on charts below'}
-        </p>
-      </div>
+            </select>
+          </div>
 
-      {/* Time Range & Metric Selection */}
-      <div className="bg-neutral-900 p-6 rounded-lg">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Time Range */}
           <div>
             <label className="block text-white text-sm font-medium mb-2">Time Range</label>
             <div className="flex gap-2">
@@ -251,20 +214,21 @@ const DetailedGames = () => {
             </div>
           </div>
 
+          {/* Metric Selector */}
           <div>
-            <label className="block text-white text-sm font-medium mb-2">Metric</label>
-            <div className="flex gap-2">
-              {['playing', 'visits', 'favorites', 'likes'].map(m => (
+            <label className="block text-white text-sm font-medium mb-2">Show Graph Of</label>
+            <div className="flex flex-col gap-2">
+              {['playing', 'visits', 'favorites'].map(m => (
                 <button
                   key={m}
                   onClick={() => setMetric(m)}
-                  className={`px-4 py-2 rounded capitalize ${
+                  className={`px-4 py-2 rounded text-left ${
                     metric === m
                       ? 'bg-white text-black'
                       : 'bg-black text-white border border-white/20'
                   }`}
                 >
-                  {m}
+                  {metricLabels[m]}
                 </button>
               ))}
             </div>
@@ -272,26 +236,7 @@ const DetailedGames = () => {
         </div>
       </div>
 
-      {/* Charts */}
-      {loading ? (
-        <div className="flex items-center justify-center h-64 text-white bg-neutral-900 rounded-lg">
-          <div className="text-lg">Loading chart data...</div>
-        </div>
-      ) : (
-        <div className="bg-neutral-900 p-6 rounded-lg">
-          <h2 className="text-xl font-bold text-white mb-4">
-            {selectedGames.length === 0
-              ? `Overall ${metric.charAt(0).toUpperCase() + metric.slice(1)} Trend`
-              : `${metric.charAt(0).toUpperCase() + metric.slice(1)} Comparison`}
-          </h2>
-          <DetailedLineChart
-            data={chartData}
-            selectedGames={selectedGames}
-            gamesList={gamesList}
-            metric={metric}
-          />
-        </div>
-      )}
+      
     </div>
   );
 };

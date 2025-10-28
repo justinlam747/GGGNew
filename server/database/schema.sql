@@ -50,6 +50,8 @@ CREATE TABLE IF NOT EXISTS game_logs (
   name TEXT NOT NULL,
   playing INTEGER DEFAULT 0,
   visits INTEGER DEFAULT 0,
+  favorites INTEGER DEFAULT 0,
+  likes INTEGER DEFAULT 0,
   max_players INTEGER DEFAULT 0,
   created DATETIME,
   updated DATETIME,

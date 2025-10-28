@@ -25,7 +25,8 @@ const Footer = () => {
         >
           <div className="relative z-10 p-12 md:p-16 flex flex-col md:flex-row justify-between items-start md:items-center">
             <div>
-              <h2 className="text-3xl font-semibold">Join our Roblox Group!</h2>
+              <h2 className="text-3xl font-semibold" style={{ textShadow: '0 0 20px rgba(255,255,255,0.5), 0 0 5px rgba(255,255,255,0.3), 0 0 100px rgba(255,255,255,0.2)' }}>Join our Roblox Group!</h2>
+              
               <p className="text-gray-400 mt-2">
                 Get free content in most of our games!
               </p>
@@ -42,6 +43,8 @@ const Footer = () => {
               </a>
             </div>
           </div>
+          {/* Point glow behind text */}
+          <div className="pointer-events-none absolute top-1/2 left-[20%] -translate-x-1/2 -translate-y-1/2 w-96 h-48 bg-white/20 rounded-full blur-[80px] z-0" style={{ transform: 'translate(-50%, -50%) translateZ(0)', willChange: 'auto' }} />
         </div>
       </div>
 
@@ -49,20 +52,24 @@ const Footer = () => {
       <div className="bg-black text-gray-400 pt-16 pb-10 px-6 md:px-20">
         <div className="flex justify-between ">
           {/* Company Info */}
-          <div className="flex flex-col  items-start">
-            
-              <img src={logo} alt="GGG Logo" className="h-40 " />
+          <div className="flex flex-col items-start relative isolate overflow-visible">
+            <div className="relative overflow-visible">
+              <img src={logo} alt="GGG Logo" className="h-40 relative z-10" style={{ filter: 'drop-shadow(0 0 30px rgba(255,255,255,0.6)) drop-shadow(0 0 60px rgba(255,255,255,0.4))', transform: 'translateZ(0)', willChange: 'auto' }} />
+              <div className="pointer-events-none absolute top-1/2 left-1/2 w-64 h-64 bg-white/15 rounded-full blur-[60px] -z-10" style={{ transform: 'translate(-50%, -50%) translateZ(0)', willChange: 'auto' }} />
+            </div>
           </div>
           <div className="flex flex-col-1 gap-x-6">
             {/* Social */}
-            <div>
-              <h4 className="text-white font-semibold mb-3">Social</h4>
-              <ul className="space-y-2">
+            <div className="relative isolate overflow-visible">
+              <h4 className="text-white font-semibold mb-3 relative z-10" style={{ textShadow: '0 0 20px rgba(255,255,255,0.6), 0 0 40px rgba(255,255,255,0.4)', willChange: 'auto' }}>Social</h4>
+              <ul className="space-y-2 relative z-10">
                 <li>
                   <a
                     href="https://www.tiktok.com/@glazinggorillagames?lang=en"
                     target="_blank"
-                    className="hover:text-white flex items-center gap-2"
+                    rel="noopener noreferrer"
+                    className="hover:text-white flex items-center gap-2 transition-colors duration-200"
+                    style={{ textShadow: '0 0 15px rgba(255,255,255,0.4)', willChange: 'auto' }}
                   >
                     <FaTiktok /> Tiktok
                   </a>
@@ -71,7 +78,9 @@ const Footer = () => {
                   <a
                     href="https://www.instagram.com/glazinggorillagames/"
                     target="_blank"
-                    className="hover:text-white flex items-center gap-2"
+                    rel="noopener noreferrer"
+                    className="hover:text-white flex items-center gap-2 transition-colors duration-200"
+                    style={{ textShadow: '0 0 15px rgba(255,255,255,0.4)', willChange: 'auto' }}
                   >
                     <FaInstagram /> Instagram
                   </a>
@@ -81,12 +90,16 @@ const Footer = () => {
                   <a
                     href="https://www.youtube.com/@GlazingGorillaGames"
                     target="_blank"
-                    className="hover:text-white flex items-center gap-2"
+                    rel="noopener noreferrer"
+                    className="hover:text-white flex items-center gap-2 transition-colors duration-200"
+                    style={{ textShadow: '0 0 15px rgba(255,255,255,0.4)', willChange: 'auto' }}
                   >
                     <FaYoutube /> YouTube
                   </a>
                 </li>
               </ul>
+              {/* Radial glow behind social section */}
+              <div className="pointer-events-none absolute top-1/2 left-1/2 w-48 h-48 bg-white/15 rounded-full blur-[50px] -z-10" style={{ transform: 'translate(-50%, -50%) translateZ(0)', willChange: 'auto' }} />
             </div>
 
             {/* Legal */}
@@ -94,7 +107,7 @@ const Footer = () => {
         </div>
 
         {/* Bottom bar */}
-        <div className=" mt-3 mx-auto pt-6 text-center text-gray-500 text-sm">
+        <div className=" mt-3 mx-auto pt-6 text-center text-gray-500 text-sm" style={{ textShadow: '0 0 20px rgba(255,255,255,0.5), 0 0 40px rgba(255,255,255,0.3)' }}>
           © 2025 GGG. All rights reserved.
         </div>
       </div>

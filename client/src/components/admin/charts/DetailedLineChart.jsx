@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 
-const DetailedLineChart = ({ data, selectedGame }) => {
+const DetailedLineChart = ({ data, selectedGame, metric = 'playing' }) => {
   const svgRef = useRef();
 
   useEffect(() => {
@@ -24,17 +24,17 @@ const DetailedLineChart = ({ data, selectedGame }) => {
     const processedData = selectedGame
       ? data.map(d => ({
           timestamp: new Date(d.timestamp),
-          playing: d.playing || 0
+          value: d[metric] || 0
         })).reverse()
       : data.reduce((acc, d) => {
           const timestamp = new Date(d.timestamp);
           const existing = acc.find(item => item.timestamp.getTime() === timestamp.getTime());
           if (existing) {
-            existing.playing += d.playing || 0;
+            existing.value += d[metric] || 0;
           } else {
             acc.push({
               timestamp,
-              playing: d.playing || 0
+              value: d[metric] || 0
             });
           }
           return acc;
@@ -48,14 +48,14 @@ const DetailedLineChart = ({ data, selectedGame }) => {
       .range([0, width]);
 
     const yScale = d3.scaleLinear()
-      .domain([0, d3.max(processedData, d => d.playing)])
+      .domain([0, d3.max(processedData, d => d.value)])
       .nice()
       .range([height, 0]);
 
     // Line generator
     const line = d3.line()
       .x(d => xScale(d.timestamp))
-      .y(d => yScale(d.playing))
+      .y(d => yScale(d.value))
       .curve(d3.curveMonotoneX);
 
     // Add X axis
@@ -87,13 +87,20 @@ const DetailedLineChart = ({ data, selectedGame }) => {
       .attr('stroke-width', 2)
       .attr('d', line);
 
+    // Metric labels
+    const metricLabels = {
+      playing: 'Players',
+      visits: 'Visits',
+      favorites: 'Favorites'
+    };
+
     // Add dots
     svg.selectAll('circle')
       .data(processedData)
       .enter()
       .append('circle')
       .attr('cx', d => xScale(d.timestamp))
-      .attr('cy', d => yScale(d.playing))
+      .attr('cy', d => yScale(d.value))
       .attr('r', 3)
       .attr('fill', 'white')
       .on('mouseover', function(event, d) {
@@ -109,7 +116,7 @@ const DetailedLineChart = ({ data, selectedGame }) => {
           .style('z-index', '1000')
           .html(`
             <div><strong>Time:</strong> ${d3.timeFormat('%Y-%m-%d %H:%M')(d.timestamp)}</div>
-            <div><strong>Playing:</strong> ${d.playing.toLocaleString()}</div>
+            <div><strong>${metricLabels[metric] || 'Value'}:</strong> ${d.value.toLocaleString()}</div>
           `)
           .style('left', (event.pageX + 10) + 'px')
           .style('top', (event.pageY - 28) + 'px');
@@ -139,9 +146,9 @@ const DetailedLineChart = ({ data, selectedGame }) => {
       .attr('y', -margin.left + 15)
       .attr('text-anchor', 'middle')
       .attr('fill', 'white')
-      .text('Players');
+      .text(metricLabels[metric] || 'Value');
 
-  }, [data, selectedGame]);
+  }, [data, selectedGame, metric]);
 
   return (
     <div className="flex justify-center">

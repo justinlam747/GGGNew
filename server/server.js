@@ -229,25 +229,47 @@ const fetchAllData = async () => {
       })
     }));
 
+    const votesUrls = cmsGames.map(game => ({
+      url: `https://games.roblox.com/v1/games/votes?universeIds=${game.universe_id}`,
+      processor: (response) => ({
+        universeId: game.universe_id,
+        upVotes: response.data.data?.[0]?.upVotes || 0,
+        downVotes: response.data.data?.[0]?.downVotes || 0
+      })
+    }));
+
     // Fetch all data with reduced concurrency to avoid rate limiting
-    const [gameResults, groupResults, imageResults] = await Promise.all([
+    const [gameResults, groupResults, imageResults, votesResults] = await Promise.all([
       fetchConcurrentWithLimit(gameUrls, 2),
       fetchConcurrentWithLimit(groupUrls, 2),
-      fetchConcurrentWithLimit(imageUrls, 2)
+      fetchConcurrentWithLimit(imageUrls, 2),
+      fetchConcurrentWithLimit(votesUrls, 2)
     ]);
 
+    // Merge votes data with game results
+    const gamesWithVotes = gameResults.map(game => {
+      const votesData = votesResults.find(v => v.universeId === game.universeId);
+      return {
+        ...game,
+        favorites: game.favoritedCount || 0,
+        likes: votesData?.upVotes || 0
+      };
+    });
+
     // Calculate totals with fallback for missing data
-    const totalPlaying = gameResults.reduce((sum, g) => sum + (g?.playing || 0), 0);
-    const totalVisits = gameResults.reduce((sum, g) => sum + (g?.visits || 0), 0);
+    const totalPlaying = gamesWithVotes.reduce((sum, g) => sum + (g?.playing || 0), 0);
+    const totalVisits = gamesWithVotes.reduce((sum, g) => sum + (g?.visits || 0), 0);
     const totalMembers = groupResults.reduce((sum, g) => sum + (g?.groupDetails?.memberCount || 0), 0);
 
     const logData = {
       timestamp: new Date(),
-      games: gameResults.length > 0 ? gameResults : cmsGames.map(game => ({
+      games: gamesWithVotes.length > 0 ? gamesWithVotes : cmsGames.map(game => ({
         universeId: game.universe_id,
         name: game.name,
         playing: 0,
-        visits: 0
+        visits: 0,
+        favorites: 0,
+        likes: 0
       })),
       groups: groupResults.length > 0 ? groupResults : cmsGroups.map(group => ({
         id: group.group_id,
@@ -302,7 +324,7 @@ setTimeout(() => {
   fetchAllData();
 }, 5000); // 5 second delay for Render cold starts
 
-setInterval(fetchAllData, 60 * 60 * 1000); // every hour
+setInterval(fetchAllData, 15 * 60 * 1000); // every 15 minutes
 
 // Error handling middleware
 const asyncHandler = (fn) => (req, res, next) => {

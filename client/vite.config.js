@@ -24,7 +24,6 @@ export default defineConfig({
           ui: ["lucide-react"],
           admin: [
             "./src/components/admin/Dashboard.jsx",
-            "./src/components/admin/Games.jsx",
             "./src/components/admin/DetailedGames.jsx",
             "./src/components/admin/DetailedGroups.jsx"
           ],

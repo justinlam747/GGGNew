@@ -120,13 +120,19 @@ router.get('/analytics/overview', requireAuth, (req, res) => {
       },
       topGames: latest.games
         .sort((a, b) => b.playing - a.playing)
-        .slice(0, 5)
         .map(g => ({
           id: g.universeId,
           name: g.name,
           playing: g.playing,
-          visits: g.visits
-        }))
+          visits: g.visits,
+          favorites: g.favorites || 0,
+          likes: g.likes || 0
+        })),
+      groups: latest.groups.map(g => ({
+        id: g.id,
+        name: g.name,
+        member_count: g.groupDetails?.memberCount || 0
+      }))
     });
   } catch (error) {
     console.error('Analytics overview error:', error);
@@ -224,12 +230,20 @@ router.get('/analytics/history', requireAuth, (req, res) => {
     const { hours = 24 } = req.query;
     const logs = db.getRecentLogs(parseInt(hours));
 
-    const history = logs.map(log => ({
-      timestamp: log.timestamp,
-      totalPlaying: log.totalPlaying,
-      totalVisits: log.totalVisits,
-      totalMembers: log.totalMembers
-    })).reverse(); // Reverse to show oldest first
+    const history = logs.map(log => {
+      // Aggregate favorites and likes from all games in this log
+      const totalFavorites = log.games?.reduce((sum, g) => sum + (g.favorites || 0), 0) || 0;
+      const totalLikes = log.games?.reduce((sum, g) => sum + (g.likes || 0), 0) || 0;
+
+      return {
+        timestamp: log.timestamp,
+        playing: log.totalPlaying,
+        visits: log.totalVisits,
+        favorites: totalFavorites,
+        likes: totalLikes,
+        members: log.totalMembers
+      };
+    }).reverse(); // Reverse to show oldest first
 
     res.json(history);
   } catch (error) {

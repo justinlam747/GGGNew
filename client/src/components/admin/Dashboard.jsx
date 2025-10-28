@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import { RefreshCw, Zap } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useDashboard } from '../../context/DashboardContext';
 import PieChart from './charts/PieChart';
-import LineChart from './charts/LineChart';
 
 const Dashboard = () => {
-  const { overview, history, loading, refresh, lastFetch } = useDashboard();
-  const [timeRange, setTimeRange] = useState('7d');
+  const { overview, loading, refresh, lastFetch } = useDashboard();
+  const [pieMetric, setPieMetric] = useState('visits'); // visits, playing, or favorites
   const [refreshingLandingPage, setRefreshingLandingPage] = useState(false);
   const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5001';
 
@@ -59,11 +58,17 @@ const Dashboard = () => {
     );
   }
 
-  // Prepare data for PieChart
+  // Prepare data for PieChart based on selected metric
   const pieData = overview?.topGames.map(game => ({
     name: game.name,
-    value: game.playing
+    value: game[pieMetric] || 0
   })) || [];
+
+  const metricLabels = {
+    playing: 'Current Players',
+    visits: 'Total Visits',
+    favorites: 'Favorites'
+  };
 
   return (
     <div className="space-y-6">
@@ -83,10 +88,10 @@ const Dashboard = () => {
         <div className="flex gap-2">
           <Button
             onClick={handleRefreshLandingPage}
-            className="bg-purple-600 hover:bg-purple-700 text-white"
+            className="bg-black p-4 text-white"
             disabled={refreshingLandingPage}
           >
-            <Zap className={`w-4 h-4 mr-2 ${refreshingLandingPage ? 'animate-spin' : ''}`} />
+           
             {refreshingLandingPage ? 'Refreshing...' : 'Refresh Landing Page'}
           </Button>
           <Button onClick={handleRefresh} className="bg-white text-black">
@@ -107,7 +112,7 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-neutral-900 p-6 rounded-lg">
               <div className="text-sm font-medium text-white mb-2">
-                Total Players
+                Current Players
               </div>
               <div className="text-2xl font-bold text-white">
                 {overview.current.totalPlaying.toLocaleString()}
@@ -151,22 +156,34 @@ const Dashboard = () => {
             </div>
           </div>
 
-  
 
-          {/* Line Chart - Player Activity */}
+
+          {/* Pie Chart - Game Contributions */}
           <div className="bg-neutral-900 p-6 rounded-lg">
-            <h2 className="text-xl font-bold text-white mb-4">Player Activity Over Time</h2>
-            <LineChart
-              data={history}
-              games={overview.topGames.map(g => g.name)}
-              timeRange={timeRange}
-              onTimeRangeChange={handleTimeRangeChange}
-            />
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-white">Game Contributions to {metricLabels[pieMetric]}</h2>
+              <div className="flex gap-2">
+                {['visits', 'playing', 'favorites'].map(metric => (
+                  <button
+                    key={metric}
+                    onClick={() => setPieMetric(metric)}
+                    className={`px-4 py-2 rounded text-sm ${
+                      pieMetric === metric
+                        ? 'bg-white text-black'
+                        : 'bg-black text-white border border-white/20'
+                    }`}
+                  >
+                    {metricLabels[metric]}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <PieChart data={pieData} metric={pieMetric} />
           </div>
 
           {/* Top Games Table */}
           <div className="bg-neutral-900 p-6 rounded-lg">
-            <h2 className="text-xl font-bold text-white mb-4">Top Games</h2>
+            <h2 className="text-xl font-bold text-white mb-4">Top 5 Games</h2>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>

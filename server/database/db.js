@@ -65,8 +65,8 @@ export function insertLog(logData) {
   `);
 
   const insertGameLog = database.prepare(`
-    INSERT INTO game_logs (log_id, universe_id, name, playing, visits, max_players, created, updated, is_playable, genre, price)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO game_logs (log_id, universe_id, name, playing, visits, favorites, likes, max_players, created, updated, is_playable, genre, price)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const insertGroupLog = database.prepare(`
@@ -103,6 +103,8 @@ export function insertLog(logData) {
           game.name,
           game.playing || 0,
           game.visits || 0,
+          game.favorites || 0,
+          game.likes || 0,
           game.maxPlayers || 0,
           game.created || null,
           game.updated || null,
@@ -397,6 +399,8 @@ function assembleLogData(logId) {
     name: g.name,
     playing: g.playing,
     visits: g.visits,
+    favorites: g.favorites || 0,
+    likes: g.likes || 0,
     maxPlayers: g.max_players,
     created: g.created,
     updated: g.updated,
