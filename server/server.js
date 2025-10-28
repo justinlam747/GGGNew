@@ -75,7 +75,8 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
   'http://localhost:5173',
   'http://localhost:5000',
   'https://glazinggorillagames.com',
-  'https://www.glazinggorillagames.com'
+  'https://www.glazinggorillagames.com',
+  'https://gggnew.onrender.com/admin'
 ];
 
 app.use(cors({
