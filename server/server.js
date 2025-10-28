@@ -50,10 +50,13 @@ app.use(express.json({ limit: '10mb' }));
 
 // Session configuration for admin auth
 const SQLiteStore = connectSqlite3(session);
+const sessionDbDir = process.env.NODE_ENV === 'production' ? '/tmp' : './database';
+console.log('📂 Session database directory:', sessionDbDir);
+
 app.use(session({
   store: new SQLiteStore({
     db: 'sessions.db',
-    dir: './database'
+    dir: sessionDbDir
   }),
   secret: process.env.SESSION_SECRET || 'ggg-secret-key-change-in-production',
   resave: false,
