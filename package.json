@@ -1,25 +1,29 @@
 {
-  "name": "gggbackend",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "ggg-backend",
+  "version": "2.0.0",
+  "description": "GGG Analytics Platform - Full Stack Application",
+  "main": "server/server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "start": "node server/server.js",
+    "dev": "nodemon server/server.js",
+    "server": "cd server && npm start"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": ["roblox", "analytics", "api"],
+  "author": "Glazing Gorilla Games",
+  "license": "UNLICENSED",
   "type": "module",
   "dependencies": {
     "axios": "^1.8.4",
+    "bcrypt": "^5.1.1",
+    "better-sqlite3": "^11.0.0",
     "compression": "^1.7.4",
+    "connect-sqlite3": "^0.9.13",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^4.21.2",
     "express-rate-limit": "^7.1.5",
-    "mongoose": "^8.13.2"
+    "express-session": "^1.18.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
