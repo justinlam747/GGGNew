@@ -1,7 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { FaTiktok } from "react-icons/fa";
-import { BiLogoInstagramAlt } from "react-icons/bi";
-import { FaYoutube } from "react-icons/fa";
+import { Music2, Instagram, Youtube } from "lucide-react";
 
 // direct file import (Vite/CRA will hash & serve this)
 import Trailer from "../assets/vid3.mp4";
@@ -139,7 +137,7 @@ export default function TikTokCarousel() {
                 rel="noopener noreferrer"
                 className="text-xl"
               >
-                <FaTiktok />
+                <Music2 />
               </a>
               <a
                 href="https://www.instagram.com/glazinggorillagames/"
@@ -147,7 +145,7 @@ export default function TikTokCarousel() {
                 rel="noopener noreferrer"
                 className="text-xl"
               >
-                <BiLogoInstagramAlt />
+                <Instagram />
               </a>
               <a
                 href="https://www.youtube.com/@GlazingGorillaGames"
@@ -155,7 +153,7 @@ export default function TikTokCarousel() {
                 rel="noopener noreferrer"
                 className="text-xl"
               >
-                <FaYoutube />
+                <Youtube />
               </a>
             </div>
           </div>
