@@ -16,21 +16,43 @@ export default defineConfig({
     outDir: "dist",
     sourcemap: false,
     minify: "terser",
+    cssMinify: true,
+    terserOptions: {
+      compress: {
+        drop_console: true, // Remove console logs in production
+        drop_debugger: true,
+        pure_funcs: ['console.log', 'console.info'],
+      },
+    },
     rollupOptions: {
       output: {
         manualChunks: {
-          // Vendor chunks for better caching
-          vendor: ["react", "react-dom", "react-router-dom"],
-          ui: ["lucide-react"],
-          admin: [
-            "./src/components/admin/Dashboard.jsx",
-            "./src/components/admin/DetailedGames.jsx",
-            "./src/components/admin/DetailedGroups.jsx"
+          // Core vendor bundle (most commonly used)
+          vendor: ["react", "react-dom"],
+          // Router separately for better caching
+          router: ["react-router-dom"],
+          // UI components
+          ui: ["lucide-react", "axios"],
+          // Radix UI components (used in admin)
+          radix: [
+            "@radix-ui/react-checkbox",
+            "@radix-ui/react-dialog",
+            "@radix-ui/react-dropdown-menu",
+            "@radix-ui/react-label",
+            "@radix-ui/react-select",
+            "@radix-ui/react-separator",
+            "@radix-ui/react-slot",
+            "@radix-ui/react-tabs"
           ],
         },
+        // Optimize chunk names
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]',
       },
     },
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 500, // Lower threshold to catch bloat
+    reportCompressedSize: true,
   },
   base: "/",
 });
