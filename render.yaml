@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: ggg-analytics-platform
+    runtime: node
+    region: oregon # Change to your preferred region
+    plan: free # or 'starter' for production
+    branch: main
+    buildCommand: npm install --production=false && cd server && npm install && cd ../client && npm install --production=false && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SESSION_SECRET
+        generateValue: true # Render will auto-generate a secure secret
+      - key: ALLOWED_ORIGINS
+        value: https://ggg-analytics-platform.onrender.com,https://glazinggorillagames.com
+    disk:
+      name: ggg-database
+      mountPath: /opt/render/project/src/server/database
+      sizeGB: 1

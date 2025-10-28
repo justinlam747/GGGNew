@@ -79,7 +79,7 @@ npm start
 | **Branch** | `main` (or your deployment branch) |
 | **Root Directory** | Leave empty (root of repo) |
 | **Runtime** | `Node` |
-| **Build Command** | `npm install && cd server && npm install && cd ../client && npm install && npm run build` |
+| **Build Command** | `npm install --production=false && cd server && npm install && cd ../client && npm install --production=false && npm run build` |
 | **Start Command** | `npm start` |
 | **Instance Type** | Free or Starter (minimum) |
 
@@ -292,6 +292,14 @@ curl https://your-app.onrender.com/health
 
 ### Common Issues
 
+**Issue**: Build fails with "vite: not found" error
+- **Root Cause**: Vite is in devDependencies, may be skipped in production builds
+- **Solution 1**: Use `--production=false` flag in build command (already configured)
+- **Solution 2**: Client build script updated to use `npx vite build` (already configured)
+- **Verify**: Check that both fixes are in place:
+  - Build command includes `npm install --production=false` for client
+  - client/package.json has `"build": "npx vite build"`
+
 **Issue**: Database resets on deployment
 - **Solution**: Ensure persistent disk is mounted at correct path
 - **Verify**: Check Render Dashboard → Disks → Mount Path
@@ -404,7 +412,7 @@ ALLOWED_ORIGINS=https://your-app.onrender.com,https://yourdomain.com
 
 ### Build Command
 ```bash
-npm install && cd server && npm install && cd ../client && npm install && npm run build
+npm install --production=false && cd server && npm install && cd ../client && npm install --production=false && npm run build
 ```
 
 ### Start Command
