@@ -18,11 +18,24 @@ export function initDatabase() {
   try {
     // Ensure database directory exists
     const dbDir = dirname(dbPath);
+    console.log('🔍 Checking database directory:', dbDir);
+
     if (!fs.existsSync(dbDir)) {
+      console.log('📁 Creating database directory:', dbDir);
       fs.mkdirSync(dbDir, { recursive: true });
     }
 
+    // Verify directory is writable
+    try {
+      fs.accessSync(dbDir, fs.constants.W_OK);
+      console.log('✅ Database directory is writable');
+    } catch (accessError) {
+      console.error('❌ Database directory not writable:', dbDir);
+      throw accessError;
+    }
+
     // Create database connection
+    console.log('📂 Creating database at:', dbPath);
     db = new Database(dbPath);
     db.pragma('journal_mode = WAL'); // Write-Ahead Logging for better concurrency
     db.pragma('foreign_keys = ON'); // Enable foreign key constraints
@@ -35,6 +48,9 @@ export function initDatabase() {
     return db;
   } catch (error) {
     console.error('❌ Database initialization failed:', error);
+    console.error('   DB Path:', dbPath);
+    console.error('   DB Dir:', dirname(dbPath));
+    console.error('   Error:', error.message);
     throw error;
   }
 }
