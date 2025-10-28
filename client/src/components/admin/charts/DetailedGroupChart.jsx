@@ -1,0 +1,139 @@
+import React, { useEffect, useRef } from 'react';
+import * as d3 from 'd3';
+
+const DetailedGroupChart = ({ data }) => {
+  const svgRef = useRef();
+
+  useEffect(() => {
+    if (!data || data.length === 0) return;
+
+    // Clear previous chart
+    d3.select(svgRef.current).selectAll('*').remove();
+
+    const margin = { top: 20, right: 30, bottom: 50, left: 60 };
+    const width = 800 - margin.left - margin.right;
+    const height = 400 - margin.top - margin.bottom;
+
+    const svg = d3.select(svgRef.current)
+      .attr('width', width + margin.left + margin.right)
+      .attr('height', height + margin.top + margin.bottom)
+      .append('g')
+      .attr('transform', `translate(${margin.left},${margin.top})`);
+
+    // Process data - reverse to get chronological order
+    const processedData = data.map(d => ({
+      date: new Date(d.date),
+      members: d.members || 0
+    })).reverse();
+
+    if (processedData.length === 0) return;
+
+    // Scales
+    const xScale = d3.scaleTime()
+      .domain(d3.extent(processedData, d => d.date))
+      .range([0, width]);
+
+    const yScale = d3.scaleLinear()
+      .domain([0, d3.max(processedData, d => d.members)])
+      .nice()
+      .range([height, 0]);
+
+    // Line generator
+    const line = d3.line()
+      .x(d => xScale(d.date))
+      .y(d => yScale(d.members))
+      .curve(d3.curveMonotoneX);
+
+    // Add X axis
+    svg.append('g')
+      .attr('transform', `translate(0,${height})`)
+      .call(d3.axisBottom(xScale).ticks(6).tickFormat(d3.timeFormat('%m/%d')))
+      .selectAll('text')
+      .attr('fill', 'white')
+      .attr('transform', 'rotate(-45)')
+      .style('text-anchor', 'end');
+
+    svg.selectAll('.domain, .tick line')
+      .attr('stroke', 'white');
+
+    // Add Y axis
+    svg.append('g')
+      .call(d3.axisLeft(yScale).ticks(5))
+      .selectAll('text')
+      .attr('fill', 'white');
+
+    svg.selectAll('.domain, .tick line')
+      .attr('stroke', 'white');
+
+    // Add line
+    svg.append('path')
+      .datum(processedData)
+      .attr('fill', 'none')
+      .attr('stroke', 'white')
+      .attr('stroke-width', 2)
+      .attr('d', line);
+
+    // Add dots
+    svg.selectAll('circle')
+      .data(processedData)
+      .enter()
+      .append('circle')
+      .attr('cx', d => xScale(d.date))
+      .attr('cy', d => yScale(d.members))
+      .attr('r', 3)
+      .attr('fill', 'white')
+      .on('mouseover', function(event, d) {
+        const tooltip = d3.select('body').append('div')
+          .attr('class', 'tooltip')
+          .style('position', 'absolute')
+          .style('background', 'black')
+          .style('border', '1px solid white')
+          .style('padding', '8px')
+          .style('color', 'white')
+          .style('font-size', '12px')
+          .style('pointer-events', 'none')
+          .style('z-index', '1000')
+          .html(`
+            <div><strong>Date:</strong> ${d3.timeFormat('%Y-%m-%d')(d.date)}</div>
+            <div><strong>Members:</strong> ${d.members.toLocaleString()}</div>
+          `)
+          .style('left', (event.pageX + 10) + 'px')
+          .style('top', (event.pageY - 28) + 'px');
+
+        d3.select(this)
+          .attr('r', 5)
+          .attr('fill', '#22c55e');
+      })
+      .on('mouseout', function() {
+        d3.selectAll('.tooltip').remove();
+        d3.select(this)
+          .attr('r', 3)
+          .attr('fill', 'white');
+      });
+
+    // Add labels
+    svg.append('text')
+      .attr('x', width / 2)
+      .attr('y', height + margin.bottom - 5)
+      .attr('text-anchor', 'middle')
+      .attr('fill', 'white')
+      .text('Date');
+
+    svg.append('text')
+      .attr('transform', 'rotate(-90)')
+      .attr('x', -height / 2)
+      .attr('y', -margin.left + 15)
+      .attr('text-anchor', 'middle')
+      .attr('fill', 'white')
+      .text('Members');
+
+  }, [data]);
+
+  return (
+    <div className="flex justify-center">
+      <svg ref={svgRef}></svg>
+    </div>
+  );
+};
+
+export default DetailedGroupChart;
