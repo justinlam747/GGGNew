@@ -5,7 +5,7 @@ services:
     region: oregon # Change to your preferred region
     plan: free # or 'starter' for production
     branch: main
-    buildCommand: npm install --production=false && cd server && npm install && cd ../client && npm install --production=false && npm run build
+    buildCommand: rm -rf client/node_modules client/.vite && npm install --production=false && cd server && npm install && cd ../client && npm install --production=false && npm run build
     startCommand: npm start
     healthCheckPath: /health
     envVars:
