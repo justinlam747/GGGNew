@@ -36,8 +36,10 @@ const App = () => {
             <AdminProvider>
               <DashboardProvider>
                 <Routes>
+                  <Route index element={<AdminLogin />} />
                   <Route path="login" element={<AdminLogin />} />
                   <Route path="/" element={<AdminLayout />}>
+                    <Route index element={<AdminDashboard />} />
                     <Route path="dashboard" element={<AdminDashboard />} />
                     <Route path="games/detailed" element={<DetailedGames />} />
                     <Route path="groups/detailed" element={<DetailedGroups />} />
