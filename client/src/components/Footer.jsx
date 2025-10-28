@@ -9,10 +9,9 @@ const Footer = () => {
       {/* ---------- Middle Banner Section ---------- */}
       <div className="flex justify-between flex-col">
         <div
-          className="relative bg-gradient-to-r from-black to-[#0d0d0d] text-white rounded-2xl sm:rounded-3xl border py-8 sm:py-10 border-neutral-900 mx-2 sm:mx-4 mt-[-40px] sm:mt-[-60px] shadow-xl overflow-hidden"
+          className="relative bg-gradient-to-r from-black to-[#0d0d0d] text-white rounded-2xl sm:rounded-3xl border py-8 sm:py-10 border-neutral-900 mx-2 sm:mx-4 mt-[-40px] sm:mt-[-60px] shadow-xl overflow-hidden banner-with-bg"
           style={{
             backgroundImage: `url(${C1})`,
-            backgroundSize: "50% 100%",
             backgroundPosition: "right center",
             backgroundRepeat: "no-repeat",
           }}

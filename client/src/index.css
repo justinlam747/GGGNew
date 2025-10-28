@@ -53,3 +53,14 @@ video {
   max-width: 100%;
   height: auto;
 }
+
+/* Footer banner background - hide on mobile, show on md+ */
+.banner-with-bg {
+  background-size: 0% 0%;
+}
+
+@media (min-width: 768px) {
+  .banner-with-bg {
+    background-size: 50% 100%;
+  }
+}
