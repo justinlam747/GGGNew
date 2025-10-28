@@ -7,8 +7,19 @@ import fs from 'fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Database path (use environment variable or default)
-const dbPath = process.env.SQLITE_PATH || join(__dirname, 'ggg.db');
+// Database path with fallback logic
+let dbPath;
+if (process.env.SQLITE_PATH) {
+  dbPath = process.env.SQLITE_PATH;
+  console.log('📌 Using SQLITE_PATH from environment:', dbPath);
+} else {
+  // Fallback: use temp directory that's always writable
+  dbPath = process.env.NODE_ENV === 'production'
+    ? '/tmp/ggg.db'  // Render's temp directory (writable but not persistent)
+    : join(__dirname, 'ggg.db');
+  console.log('📌 Using fallback database path:', dbPath);
+}
+
 const schemaPath = join(__dirname, 'schema.sql');
 
 // Initialize database
@@ -19,24 +30,29 @@ export function initDatabase() {
     // Ensure database directory exists
     const dbDir = dirname(dbPath);
     console.log('🔍 Checking database directory:', dbDir);
+    console.log('🔍 Full database path:', dbPath);
 
-    if (!fs.existsSync(dbDir)) {
-      console.log('📁 Creating database directory:', dbDir);
-      fs.mkdirSync(dbDir, { recursive: true });
-    }
-
-    // Verify directory is writable
+    // Try to create directory if it doesn't exist
     try {
+      if (!fs.existsSync(dbDir)) {
+        console.log('📁 Creating database directory:', dbDir);
+        fs.mkdirSync(dbDir, { recursive: true, mode: 0o777 });
+      }
+
+      // Verify directory is writable
       fs.accessSync(dbDir, fs.constants.W_OK);
       console.log('✅ Database directory is writable');
-    } catch (accessError) {
-      console.error('❌ Database directory not writable:', dbDir);
-      throw accessError;
+    } catch (dirError) {
+      console.warn('⚠️  Database directory issue:', dirError.message);
+      console.warn('⚠️  Attempting to continue anyway...');
     }
 
     // Create database connection
     console.log('📂 Creating database at:', dbPath);
     db = new Database(dbPath);
+
+    console.log('✅ Database file created successfully');
+
     db.pragma('journal_mode = WAL'); // Write-Ahead Logging for better concurrency
     db.pragma('foreign_keys = ON'); // Enable foreign key constraints
 
@@ -47,10 +63,20 @@ export function initDatabase() {
     console.log('✅ SQLite database initialized at:', dbPath);
     return db;
   } catch (error) {
-    console.error('❌ Database initialization failed:', error);
+    console.error('❌ Database initialization failed');
     console.error('   DB Path:', dbPath);
     console.error('   DB Dir:', dirname(dbPath));
-    console.error('   Error:', error.message);
+    console.error('   Error Code:', error.code);
+    console.error('   Error Message:', error.message);
+    console.error('   Full Error:', error);
+
+    // Try alternative path as last resort
+    if (dbPath !== '/tmp/ggg.db') {
+      console.log('🔄 Retrying with /tmp/ggg.db...');
+      dbPath = '/tmp/ggg.db';
+      return initDatabase();
+    }
+
     throw error;
   }
 }
