@@ -12,8 +12,13 @@ export const useGameData = () => {
 };
 
 export const GameProvider = ({ children }) => {
-  // Use relative URLs in production, localhost in development
-  const API_BASE = import.meta.env.PROD ? '' : 'http://localhost:5001';
+  // Use hostname detection for reliable production/development detection
+  const isProduction = typeof window !== 'undefined' && (
+    window.location.hostname === 'gggnew.onrender.com' ||
+    window.location.hostname === 'glazinggorillagames.com' ||
+    window.location.hostname === 'www.glazinggorillagames.com'
+  );
+  const API_BASE = isProduction ? '' : 'http://localhost:5001';
 
   const [gameData, setGameData] = useState(null);
   const [groupData, setGroupData] = useState(null);
