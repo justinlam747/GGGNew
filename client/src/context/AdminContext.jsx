@@ -15,7 +15,10 @@ export const AdminProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false); // Changed to false - only check auth when needed
 
-  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5001';
+  // Use empty string for production (relative URLs), localhost for development
+  const API_BASE = import.meta.env.VITE_API_BASE !== undefined
+    ? import.meta.env.VITE_API_BASE
+    : 'http://localhost:5001';
 
   const checkAuth = useCallback(async () => {
     console.log('[AdminContext] checkAuth called, pathname:', window.location.pathname);

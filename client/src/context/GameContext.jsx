@@ -12,7 +12,10 @@ export const useGameData = () => {
 };
 
 export const GameProvider = ({ children }) => {
-  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5001';
+  // Use empty string for production (relative URLs), localhost for development
+  const API_BASE = import.meta.env.VITE_API_BASE !== undefined
+    ? import.meta.env.VITE_API_BASE
+    : 'http://localhost:5001';
 
   const [gameData, setGameData] = useState(null);
   const [groupData, setGroupData] = useState(null);
