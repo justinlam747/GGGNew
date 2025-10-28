@@ -120,7 +120,7 @@ SQLite requires persistent storage to retain data between deployments.
 
 2. **Add Disk**:
    - **Name**: `ggg-database`
-   - **Mount Path**: `/var/data`
+   - **Mount Path**: `/data`
    - **Size**: 1 GB (minimum, adjust based on needs)
 
 3. **Save Changes**
@@ -427,12 +427,12 @@ npm start
 
 ### Persistent Disk Mount
 ```
-/var/data
+/data
 ```
 
 ### Environment Variables
 ```
-SQLITE_PATH=/var/data/ggg.db
+SQLITE_PATH=/data/ggg.db
 ```
 
 ---
