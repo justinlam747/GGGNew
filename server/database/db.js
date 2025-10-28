@@ -26,59 +26,66 @@ const schemaPath = join(__dirname, 'schema.sql');
 let db;
 
 export function initDatabase() {
-  try {
-    // Ensure database directory exists
-    const dbDir = dirname(dbPath);
-    console.log('🔍 Checking database directory:', dbDir);
-    console.log('🔍 Full database path:', dbPath);
+  const pathsToTry = [
+    dbPath,  // First try the configured path
+    '/tmp/ggg.db'  // Fallback to /tmp
+  ];
 
-    // Try to create directory if it doesn't exist
+  let lastError;
+
+  for (const tryPath of pathsToTry) {
     try {
-      if (!fs.existsSync(dbDir)) {
-        console.log('📁 Creating database directory:', dbDir);
-        fs.mkdirSync(dbDir, { recursive: true, mode: 0o777 });
+      const dbDir = dirname(tryPath);
+      console.log('🔍 Trying database path:', tryPath);
+      console.log('🔍 Directory:', dbDir);
+
+      // Try to create directory if it doesn't exist
+      try {
+        if (!fs.existsSync(dbDir)) {
+          console.log('📁 Creating directory:', dbDir);
+          fs.mkdirSync(dbDir, { recursive: true, mode: 0o777 });
+        }
+        fs.accessSync(dbDir, fs.constants.W_OK);
+        console.log('✅ Directory is writable');
+      } catch (dirError) {
+        console.warn('⚠️  Directory issue:', dirError.message);
+        if (tryPath !== pathsToTry[pathsToTry.length - 1]) {
+          console.log('⏭️  Skipping to next path...');
+          continue;  // Skip to next path
+        }
+        console.warn('⚠️  Attempting to continue anyway (last option)...');
       }
 
-      // Verify directory is writable
-      fs.accessSync(dbDir, fs.constants.W_OK);
-      console.log('✅ Database directory is writable');
-    } catch (dirError) {
-      console.warn('⚠️  Database directory issue:', dirError.message);
-      console.warn('⚠️  Attempting to continue anyway...');
+      // Create database connection
+      console.log('📂 Creating database at:', tryPath);
+      db = new Database(tryPath);
+      console.log('✅ Database file created successfully');
+
+      db.pragma('journal_mode = WAL');
+      db.pragma('foreign_keys = ON');
+
+      const schema = fs.readFileSync(schemaPath, 'utf-8');
+      db.exec(schema);
+
+      console.log('✅ SQLite database initialized at:', tryPath);
+      return db;
+
+    } catch (error) {
+      console.error(`❌ Failed with path ${tryPath}:`, error.message);
+      lastError = error;
+
+      if (tryPath !== pathsToTry[pathsToTry.length - 1]) {
+        console.log('🔄 Trying next path...');
+        continue;
+      }
     }
-
-    // Create database connection
-    console.log('📂 Creating database at:', dbPath);
-    db = new Database(dbPath);
-
-    console.log('✅ Database file created successfully');
-
-    db.pragma('journal_mode = WAL'); // Write-Ahead Logging for better concurrency
-    db.pragma('foreign_keys = ON'); // Enable foreign key constraints
-
-    // Read and execute schema
-    const schema = fs.readFileSync(schemaPath, 'utf-8');
-    db.exec(schema);
-
-    console.log('✅ SQLite database initialized at:', dbPath);
-    return db;
-  } catch (error) {
-    console.error('❌ Database initialization failed');
-    console.error('   DB Path:', dbPath);
-    console.error('   DB Dir:', dirname(dbPath));
-    console.error('   Error Code:', error.code);
-    console.error('   Error Message:', error.message);
-    console.error('   Full Error:', error);
-
-    // Try alternative path as last resort
-    if (dbPath !== '/tmp/ggg.db') {
-      console.log('🔄 Retrying with /tmp/ggg.db...');
-      dbPath = '/tmp/ggg.db';
-      return initDatabase();
-    }
-
-    throw error;
   }
+
+  // All paths failed
+  console.error('❌ All database paths failed');
+  console.error('   Tried paths:', pathsToTry);
+  console.error('   Last error:', lastError);
+  throw lastError;
 }
 
 // Get database instance
