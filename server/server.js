@@ -24,6 +24,46 @@ const __dirname = path.dirname(__filename);
 // Initialize database
 db.initDatabase();
 
+// Auto-populate CMS from details.js if empty
+const database = db.getDatabase();
+const gamesCount = database.prepare('SELECT COUNT(*) as count FROM cms_games').get();
+if (gamesCount.count === 0) {
+  console.log('📦 CMS is empty, auto-populating from details.js...');
+
+  // Import and populate
+  import('./details.js').then(async ({ details, groupDetails }) => {
+    try {
+      // Populate games
+      for (const game of details) {
+        const insertStmt = database.prepare(`
+          INSERT INTO cms_games (universe_id, name, is_active, display_order)
+          VALUES (?, ?, ?, ?)
+        `);
+        insertStmt.run(game.id, game.name, game.show ? 1 : 0, 0);
+      }
+      console.log(`✅ Added ${details.length} games to CMS`);
+
+      // Populate groups
+      for (const group of groupDetails) {
+        const insertStmt = database.prepare(`
+          INSERT INTO cms_groups (group_id, name, is_active)
+          VALUES (?, ?, ?)
+        `);
+        insertStmt.run(group.id, `Group ${group.id}`, 1);
+      }
+      console.log(`✅ Added ${groupDetails.length} groups to CMS`);
+
+      // Trigger immediate data fetch
+      console.log('🔄 Triggering initial data fetch...');
+      setTimeout(() => fetchAllData(), 2000);
+    } catch (error) {
+      console.error('❌ Error auto-populating CMS:', error);
+    }
+  });
+} else {
+  console.log(`✅ CMS has ${gamesCount.count} games`);
+}
+
 const app = express();
 
 // Trust proxy for Render deployment
