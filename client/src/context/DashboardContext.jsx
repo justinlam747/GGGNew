@@ -17,10 +17,8 @@ export const DashboardProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [lastFetch, setLastFetch] = useState(null);
 
-  // Use empty string for production (relative URLs), localhost for development
-  const API_BASE = import.meta.env.VITE_API_BASE !== undefined
-    ? import.meta.env.VITE_API_BASE
-    : 'http://localhost:5001';
+  // Use relative URLs in production, localhost in development
+  const API_BASE = import.meta.env.PROD ? '' : 'http://localhost:5001';
 
   // Load from localStorage on mount
   useEffect(() => {
