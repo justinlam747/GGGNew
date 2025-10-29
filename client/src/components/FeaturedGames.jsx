@@ -9,7 +9,7 @@ const FeaturedGames = () => {
     return imageEntry?.media?.[0]?.imageUrl || "";
   };
 
-  // Get all games (no filtering, show all 9)
+  // Get all games
   const allGames = gameData || [];
 
   // Duplicate the games array to create seamless infinite scroll
@@ -26,7 +26,7 @@ const FeaturedGames = () => {
   }
 
   return (
-    <section className="relative py-16 text-white overflow-hidden">
+    <section className="relative py-12 text-white overflow-hidden">
       {/* Background effects */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
         <div className="size-[80vmin] rounded-full opacity-[0.12] blur-3xl bg-[radial-gradient(closest-side,rgba(255,255,255,0.9),rgba(255,255,255,0))]" />
@@ -41,67 +41,30 @@ const FeaturedGames = () => {
         }}
       />
 
-      <div className="mx-auto w-full">
-        <h2 className="mb-8 text-center text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight">
-          Featured Games
-        </h2>
+      {/* Carousel Container - Only show 3 cards at a time */}
+      <div className="relative mx-auto" style={{ maxWidth: '1080px' }}>
+        {/* Gradient fade on left */}
+        <div className="absolute left-0 top-0 bottom-0 w-20 md:w-32 bg-gradient-to-r from-black to-transparent z-10 pointer-events-none" />
 
-        {/* Infinite Carousel Container */}
-        <div className="relative">
-          {/* Gradient fade on left */}
-          <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-black to-transparent z-10 pointer-events-none" />
+        {/* Gradient fade on right */}
+        <div className="absolute right-0 top-0 bottom-0 w-20 md:w-32 bg-gradient-to-l from-black to-transparent z-10 pointer-events-none" />
 
-          {/* Gradient fade on right */}
-          <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-black to-transparent z-10 pointer-events-none" />
-
-          {/* Scrolling wrapper */}
-          <div className="carousel-wrapper overflow-hidden">
-            <div className="carousel-track flex gap-6">
-              {duplicatedGames.map((game, index) => (
-                <GameCard
-                  key={`${game.universeId}-${index}`}
-                  image={getImageForGame(game.universeId)}
-                  title={game.name}
-                  visits={game.visits?.toLocaleString() ?? "N/A"}
-                  players={game.playing?.toLocaleString() ?? "N/A"}
-                  rootPlaceId={game.rootPlaceId}
-                />
-              ))}
-            </div>
+        {/* Scrolling wrapper */}
+        <div className="overflow-hidden">
+          <div className="carousel-track flex gap-6 px-6">
+            {duplicatedGames.map((game, index) => (
+              <GameCard
+                key={`${game.universeId}-${index}`}
+                image={getImageForGame(game.universeId)}
+                title={game.name}
+                visits={game.visits?.toLocaleString() ?? "N/A"}
+                players={game.playing?.toLocaleString() ?? "N/A"}
+                rootPlaceId={game.rootPlaceId}
+              />
+            ))}
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        .carousel-wrapper {
-          width: 100%;
-        }
-
-        .carousel-track {
-          animation: scroll 60s linear infinite;
-          will-change: transform;
-        }
-
-        .carousel-track:hover {
-          animation-play-state: paused;
-        }
-
-        @keyframes scroll {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(calc(-100% / 3));
-          }
-        }
-
-        /* Ensure smooth performance */
-        @media (prefers-reduced-motion: reduce) {
-          .carousel-track {
-            animation: none;
-          }
-        }
-      `}</style>
     </section>
   );
 };
