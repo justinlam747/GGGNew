@@ -66,22 +66,23 @@ video {
 }
 
 /* Infinite carousel animation */
+@keyframes carousel-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-33.333%);
+  }
+}
+
 .carousel-track {
-  animation: carousel-scroll 40s linear infinite;
+  display: flex;
+  animation: carousel-scroll 20s linear infinite;
   will-change: transform;
 }
 
 .carousel-track:hover {
   animation-play-state: paused;
-}
-
-@keyframes carousel-scroll {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(calc(-100% / 3));
-  }
 }
 
 /* Respect reduced motion preferences */

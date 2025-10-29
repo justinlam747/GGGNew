@@ -50,8 +50,8 @@ const FeaturedGames = () => {
         <div className="absolute right-0 top-0 bottom-0 w-20 md:w-32 bg-gradient-to-l from-black to-transparent z-10 pointer-events-none" />
 
         {/* Scrolling wrapper */}
-        <div className="overflow-hidden">
-          <div className="carousel-track flex gap-6 px-6">
+        <div className="overflow-hidden w-full">
+          <div className="carousel-track gap-6 px-6">
             {duplicatedGames.map((game, index) => (
               <GameCard
                 key={`${game.universeId}-${index}`}
