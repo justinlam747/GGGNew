@@ -17,7 +17,62 @@ import {
 
 const router = express.Router();
 
-// Apply authentication and user attachment middleware to all CMS routes
+// ============================================================================
+// PROXY ENDPOINTS (for avoiding CORS issues) - NO AUTH REQUIRED
+// ============================================================================
+
+/**
+ * GET /api/cms/proxy/game-info/:universeId
+ * Fetch game information from Roblox API (proxy to avoid CORS)
+ */
+router.get('/proxy/game-info/:universeId', async (req, res) => {
+  try {
+    const { universeId } = req.params;
+
+    if (!universeId) {
+      return res.status(400).json({
+        success: false,
+        error: 'universeId is required'
+      });
+    }
+
+    // Import axios dynamically
+    const axios = (await import('axios')).default;
+
+    const response = await axios.get(
+      `https://games.roblox.com/v1/games?universeIds=${universeId}`,
+      {
+        timeout: 10000,
+        headers: {
+          'User-Agent': 'GGGBackend/1.0',
+          'Accept': 'application/json'
+        }
+      }
+    );
+
+    const gameData = response.data.data?.[0];
+
+    if (!gameData) {
+      return res.status(404).json({
+        success: false,
+        error: 'Game not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: gameData
+    });
+  } catch (error) {
+    console.error('Error fetching game info:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch game information'
+    });
+  }
+});
+
+// Apply authentication and user attachment middleware to all CMS routes BELOW
 router.use(requireAuth);
 router.use(attachUser);
 

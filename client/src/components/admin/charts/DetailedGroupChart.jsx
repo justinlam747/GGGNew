@@ -47,8 +47,14 @@ const DetailedGroupChart = ({ data, selectedGroup }) => {
       .domain(d3.extent(processedData, d => d.date))
       .range([0, width]);
 
+    // Calculate min/max with padding for y-axis
+    const minValue = d3.min(processedData, d => d.members);
+    const maxValue = d3.max(processedData, d => d.members);
+    const range = maxValue - minValue;
+    const padding = range * 0.1; // 10% padding below min
+
     const yScale = d3.scaleLinear()
-      .domain([0, d3.max(processedData, d => d.members)])
+      .domain([minValue - padding, maxValue])
       .nice()
       .range([height, 0]);
 

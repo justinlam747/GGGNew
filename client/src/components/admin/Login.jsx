@@ -3,8 +3,6 @@ import { Navigate } from "react-router-dom";
 import { useAdmin } from "../../context/AdminContext";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Lock } from "lucide-react";
 import ggg from "../../assets/ggg.svg";
 
 const Login = () => {
@@ -102,7 +100,7 @@ const Login = () => {
               className="w-full rounded-md border border-neutral-900 bg-neutral-950 text-white "
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Logging in..." : "Login"}
+              {isSubmitting ? "logging in..." : "login"}
             </Button>
           </form>
           

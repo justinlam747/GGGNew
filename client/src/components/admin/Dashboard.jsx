@@ -3,35 +3,13 @@ import { RefreshCw } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useDashboard } from '../../context/DashboardContext';
 import PieChart from './charts/PieChart';
-import { getApiBaseUrl } from '../../utils/api';
 
 const Dashboard = () => {
   const { overview, loading, refresh, lastFetch } = useDashboard();
   const [pieMetric, setPieMetric] = useState('visits'); // visits, playing, or favorites
-  const [refreshingLandingPage, setRefreshingLandingPage] = useState(false);
-  const API_BASE = getApiBaseUrl();
 
   const handleRefresh = () => {
     refresh();
-  };
-
-  const handleRefreshLandingPage = async () => {
-    setRefreshingLandingPage(true);
-    try {
-      const response = await fetch(`${API_BASE}/proxy/refresh`, {
-        method: 'POST'
-      });
-      const data = await response.json();
-      console.log('Landing page refreshed:', data);
-      alert('Landing page data refreshed successfully!');
-      // Also refresh dashboard data to show updated stats
-      refresh();
-    } catch (error) {
-      console.error('Error refreshing landing page:', error);
-      alert('Failed to refresh landing page data');
-    } finally {
-      setRefreshingLandingPage(false);
-    }
   };
 
   const handleTimeRangeChange = (range) => {
@@ -86,20 +64,10 @@ const Dashboard = () => {
             </p>
           )}
         </div>
-        <div className="flex gap-2">
-          <Button
-            onClick={handleRefreshLandingPage}
-            className="bg-black p-4 text-white"
-            disabled={refreshingLandingPage}
-          >
-           
-            {refreshingLandingPage ? 'Refreshing...' : 'Refresh Landing Page'}
-          </Button>
-          <Button onClick={handleRefresh} className="bg-white text-black">
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh Data
-          </Button>
-        </div>
+        <Button onClick={handleRefresh} className="bg-white text-black">
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Refresh Dashboard
+        </Button>
       </div>
 
       {!overview ? (
@@ -111,7 +79,7 @@ const Dashboard = () => {
         <div className="space-y-6">
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-neutral-900 p-6 rounded-lg">
+            <div className="bg-neutral-950 border border-neutral-900 p-6 rounded-lg">
               <div className="text-sm font-medium text-white mb-2">
                 Current Players
               </div>
@@ -126,7 +94,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="bg-neutral-900 p-6 rounded-lg">
+            <div className="bg-neutral-950 border border-neutral-900 p-6 rounded-lg">
               <div className="text-sm font-medium text-white mb-2">
                 Total Visits
               </div>
@@ -141,7 +109,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="bg-neutral-900 p-6 rounded-lg">
+            <div className="bg-neutral-950 border border-neutral-900 p-6 rounded-lg">
               <div className="text-sm font-medium text-white mb-2">
                 Total Members
               </div>
@@ -160,7 +128,7 @@ const Dashboard = () => {
 
 
           {/* Pie Chart - Game Contributions */}
-          <div className="bg-neutral-900 p-6 rounded-lg">
+          <div className="bg-neutral-950 border border-neutral-900 p-6 rounded-lg">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-white">Game Contributions to {metricLabels[pieMetric]}</h2>
               <div className="flex gap-2">
@@ -183,8 +151,8 @@ const Dashboard = () => {
           </div>
 
           {/* Top Games Table */}
-          <div className="bg-neutral-900 p-6 rounded-lg">
-            <h2 className="text-xl font-bold text-white mb-4">Top 5 Games</h2>
+          <div className="bg-neutral-950 border border-neutral-900 p-6 rounded-lg">
+            <h2 className="text-xl font-bold text-white mb-4">Games</h2>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>

@@ -45,18 +45,23 @@ export default function TikTokCarousel() {
         pb-16
 
       "
+      style={{ contain: 'layout style' }}
     >
-      <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-end">
+      <div
+        className="pointer-events-none absolute inset-0 z-0 flex items-center justify-end"
+        style={{ transform: 'translateZ(0)' }}
+      >
         <div className="size-[80vmin] rounded-full opacity-[0.12] blur-3xl bg-[radial-gradient(closest-side,rgba(255,255,255,0.9),rgba(255,255,255,0.0))]" />
       </div>
 
-      {/* subtle film grain */}
+      {/* subtle film grain - GPU accelerated */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.05] mix-blend-screen"
         style={{
           backgroundImage:
             "url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22160%22 height=%22160%22 viewBox=%220 0 160 160%22><filter id=%22n%22><feTurbulence type=%22fractalNoise%22 baseFrequency=%220.8%22 numOctaves=%222%22 stitchTiles=%22stitch%22/></filter><rect width=%22160%22 height=%22160%22 filter=%22url(%23n)%22 opacity=%220.35%22/></svg>')",
           backgroundSize: "160px 160px",
+          transform: 'translateZ(0)',
         }}
       />
 
@@ -70,6 +75,7 @@ export default function TikTokCarousel() {
               max-h-[820px]
               aspect-[9/16] sm:aspect-[9/16]
             "
+            style={{ contain: 'layout style' }}
           >
             <a
               href={VIDEO_DATA.href}
@@ -82,6 +88,11 @@ export default function TikTokCarousel() {
                 transition-transform duration-300 hover:scale-[1.02]
                 overflow-hidden
               "
+              style={{
+                willChange: 'transform',
+                transform: 'translateZ(0)',
+                contain: 'paint',
+              }}
             >
               <video
                 ref={videoRef}
@@ -112,6 +123,10 @@ export default function TikTokCarousel() {
             "before:bg-[radial-gradient(60%_60%_at_50%_40%,rgba(255,255,255,0.06),transparent_60%)]",
             "overflow-hidden grid place-items-center text-center",
           ].join(" ")}
+          style={{
+            contain: 'layout style paint',
+            transform: 'translateZ(0)',
+          }}
         >
           {/* inner ring to match cards */}
           <div className="pointer-events-none absolute inset-0 rounded-3xl ring-1 ring-white/10" />

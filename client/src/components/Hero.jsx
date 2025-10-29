@@ -13,24 +13,32 @@ const Hero = ({ data, gameImages }) => {
   return (
     <section
       id="hero"
-      className="relative  w-full  bg-[rgb(2,2,2)] text-white"
+      className="relative w-full bg-[rgb(2,2,2)] text-white"
+      style={{ contain: 'layout style paint' }}
     >
-      {/* soft center spotlight */}
-      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+      {/* soft center spotlight - GPU accelerated */}
+      <div
+        className="pointer-events-none absolute inset-0 flex items-center justify-center"
+        style={{ transform: 'translateZ(0)' }}
+      >
         <div className="size-[80vmin] rounded-full opacity-[0.12] blur-3xl bg-[radial-gradient(closest-side,rgba(255,255,255,0.9),rgba(255,255,255,0.0))]" />
       </div>
 
-      {/* subtle film grain */}
+      {/* subtle film grain - GPU accelerated */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.05] mix-blend-screen"
         style={{
           backgroundImage:
             "url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22160%22 height=%22160%22 viewBox=%220 0 160 160%22><filter id=%22n%22><feTurbulence type=%22fractalNoise%22 baseFrequency=%220.8%22 numOctaves=%222%22 stitchTiles=%22stitch%22/></filter><rect width=%22160%22 height=%22160%22 filter=%22url(%23n)%22 opacity=%220.35%22/></svg>')",
           backgroundSize: "160px 160px",
+          transform: 'translateZ(0)',
         }}
       />
-      {/* top gradient */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/70 to-transparent z-0" />
+      {/* top gradient - GPU accelerated */}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/70 to-transparent z-0"
+        style={{ transform: 'translateZ(0)' }}
+      />
 
       {/* content */}
       <div
@@ -38,6 +46,7 @@ const Hero = ({ data, gameImages }) => {
           "relative z-10 mx-auto flex min-h-[92vh] max-w-6xl flex-col items-center justify-center px-6 text-center transition-all duration-700",
           mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
         ].join(" ")}
+        style={{ willChange: mounted ? 'auto' : 'opacity, transform' }}
       >
         {/* headline */}
         <h1 className="font-extrabold tracking-tight leading-[0.9] text-[15vw] sm:text-[12vw] md:text-[9vw] lg:text-[7.5vw]">
@@ -67,6 +76,10 @@ const Hero = ({ data, gameImages }) => {
                shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_8px_25px_rgba(0,0,0,0.45)]
                hover:bg-white/15 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_12px_35px_rgba(0,0,0,0.55)]
                active:scale-[0.98] transition-all duration-300"
+            style={{
+              willChange: 'transform',
+              transform: 'translateZ(0)',
+            }}
           >
             Explore Our Games
           </button>

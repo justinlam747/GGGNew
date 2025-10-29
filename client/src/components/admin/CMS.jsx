@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
-import { Settings, Gamepad2, Users, FileText } from 'lucide-react';
+import { Gamepad2, Users } from 'lucide-react';
 import GamesManager from './cms/GamesManager';
 import GroupsManager from './cms/GroupsManager';
-import ContentEditor from './cms/ContentEditor';
-import SettingsManager from './cms/SettingsManager';
 
 const CMS = () => {
   const [activeTab, setActiveTab] = useState('games');
@@ -11,7 +9,6 @@ const CMS = () => {
   const tabs = [
     { id: 'games', label: 'Games', icon: Gamepad2, component: GamesManager },
     { id: 'groups', label: 'Groups', icon: Users, component: GroupsManager },
-    
   ];
 
   const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component;

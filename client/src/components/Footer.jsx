@@ -28,6 +28,10 @@ const Footer = () => {
   shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_8px_25px_rgba(0,0,0,0.45)]
   hover:bg-white/15 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_12px_35px_rgba(0,0,0,0.55)]
   active:scale-[0.98] transition-all duration-300 inline-block"
+                style={{
+                  willChange: 'transform',
+                  transform: 'translateZ(0)',
+                }}
                 href="https://www.roblox.com/communities/17206753/Glazing-Gorilla-Games#!/about"
                 target="_blank"
                 rel="noopener noreferrer"

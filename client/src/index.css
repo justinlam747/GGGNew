@@ -64,3 +64,41 @@ video {
     background-size: 50% 100%;
   }
 }
+
+/* Smooth page transitions with GPU acceleration */
+.page-transition {
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+  will-change: opacity, transform;
+  transform: translateZ(0);
+}
+
+/* Optimize admin panel rendering */
+main {
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Smooth navigation transitions */
+nav a,
+aside a {
+  transition: all 0.2s ease-out;
+  transform: translateZ(0);
+}
+
+/* Prevent layout shift during transitions */
+@media (prefers-reduced-motion: no-preference) {
+  * {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

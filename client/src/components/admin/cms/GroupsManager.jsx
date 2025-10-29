@@ -116,7 +116,7 @@ const GroupsManager = () => {
       </div>
 
       {/* Groups Table */}
-      <div className="bg-neutral-900 rounded-lg overflow-hidden">
+      <div className="bg-neutral-950 border border-neutral-900 rounded-lg overflow-hidden">
         <table className="w-full">
           <thead>
             <tr className="border-b border-white/10">
@@ -214,7 +214,7 @@ const GroupModal = ({ group, onClose, onSave }) => {
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-      <div className="bg-neutral-900 p-8 rounded-lg max-w-2xl w-full">
+      <div className="bg-neutral-950 border border-neutral-900 p-8 rounded-lg max-w-2xl w-full">
         <h2 className="text-2xl font-bold text-white mb-6">
           {group ? 'Edit Group' : 'Add Group'}
         </h2>

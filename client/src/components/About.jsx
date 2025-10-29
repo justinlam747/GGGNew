@@ -11,6 +11,11 @@ const BentoCard = ({ title, children, className = "" }) => (
       "overflow-hidden transition-transform duration-300 hover:-translate-y-0.5",
       className,
     ].join(" ")}
+    style={{
+      willChange: 'transform',
+      transform: 'translateZ(0)',
+      contain: 'paint',
+    }}
   >
     {/* inner ring (stays inside the card) */}
     <div className="pointer-events-none absolute inset-0 rounded-3xl ring-1 ring-white/10" />
@@ -46,9 +51,13 @@ const About = ({ totalData }) => {
     flex items-center
     overflow-visible md:overflow-hidden /* don't crop on mobile */
   "
+      style={{ contain: 'layout style paint' }}
     >
       {/* soft center spotlight (z-0, isolated to this section) */}
-      <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-start">
+      <div
+        className="pointer-events-none absolute inset-0 z-0 flex items-center justify-start"
+        style={{ transform: 'translateZ(0)' }}
+      >
         <div className="size-[80vmin] rounded-full opacity-[0.12] blur-3xl bg-[radial-gradient(closest-side,rgba(255,255,255,0.9),rgba(255,255,255,0.0))]" />
       </div>
 
@@ -59,6 +68,7 @@ const About = ({ totalData }) => {
           backgroundImage:
             "url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22160%22 height=%22160%22 viewBox=%220 0 160 160%22><filter id=%22n%22><feTurbulence type=%22fractalNoise%22 baseFrequency=%220.8%22 numOctaves=%222%22 stitchTiles=%22stitch%22/></filter><rect width=%22160%22 height=%22160%22 filter=%22url(%23n)%22 opacity=%220.35%22/></svg>')",
           backgroundSize: "160px 160px",
+          transform: 'translateZ(0)',
         }}
       />
 

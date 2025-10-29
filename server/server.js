@@ -7,6 +7,7 @@ import compression from "compression";
 import rateLimit from "express-rate-limit";
 import session from "express-session";
 import connectSqlite3 from "connect-sqlite3";
+import cron from "node-cron";
 import path from "path";
 import { fileURLToPath } from "url";
 import { details, groupDetails } from "./details.js";
@@ -23,6 +24,82 @@ const __dirname = path.dirname(__filename);
 
 // Initialize database
 db.initDatabase();
+
+// One-time migration: Sync game names from Roblox API
+const syncGameNamesOnce = async () => {
+  const database = db.getDatabase();
+
+  try {
+    // Check if migration has already run
+    const migrationCheck = database.prepare(
+      "SELECT setting_value FROM cms_settings WHERE setting_key = 'game_names_synced'"
+    ).get();
+
+    if (migrationCheck?.setting_value === '1') {
+      console.log('✅ Game names already synced, skipping migration');
+      return;
+    }
+
+    console.log('🔄 Starting one-time game name sync from Roblox API...');
+
+    // Get all games from CMS
+    const games = database.prepare('SELECT * FROM cms_games').all();
+
+    if (games.length === 0) {
+      console.log('⚠️ No games to sync');
+      return;
+    }
+
+    let successCount = 0;
+    let failCount = 0;
+
+    // Sync each game's name from Roblox API
+    for (const game of games) {
+      try {
+        const response = await axios.get(
+          `https://games.roblox.com/v1/games?universeIds=${game.universe_id}`,
+          {
+            timeout: 10000,
+            headers: {
+              'User-Agent': 'GGGBackend/1.0',
+              'Accept': 'application/json'
+            }
+          }
+        );
+
+        const gameData = response.data.data?.[0];
+
+        if (gameData && gameData.name) {
+          // Update game name in database
+          database.prepare('UPDATE cms_games SET name = ? WHERE id = ?')
+            .run(gameData.name, game.id);
+
+          console.log(`✅ Synced: "${game.name}" → "${gameData.name}" (ID: ${game.universe_id})`);
+          successCount++;
+        } else {
+          console.warn(`⚠️ No data found for universe ID: ${game.universe_id}`);
+          failCount++;
+        }
+
+        // Small delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } catch (error) {
+        console.error(`❌ Failed to sync game ${game.universe_id}:`, error.message);
+        failCount++;
+      }
+    }
+
+    console.log(`🎉 Game name sync complete: ${successCount} successful, ${failCount} failed`);
+
+    // Mark migration as complete
+    database.prepare(
+      "INSERT OR REPLACE INTO cms_settings (setting_key, setting_value) VALUES ('game_names_synced', '1')"
+    ).run();
+
+  } catch (error) {
+    console.error('❌ Error during game name sync:', error);
+  }
+};
 
 // Auto-populate CMS from details.js if empty
 const database = db.getDatabase();
@@ -55,13 +132,18 @@ if (gamesCount.count === 0) {
 
       // Trigger immediate data fetch
       console.log('🔄 Triggering initial data fetch...');
-      setTimeout(() => fetchAllData(), 2000);
+      setTimeout(() => fetchAndCache(), 2000);
+
+      // Run name sync after population
+      setTimeout(() => syncGameNamesOnce(), 3000);
     } catch (error) {
       console.error('❌ Error auto-populating CMS:', error);
     }
   });
 } else {
   console.log(`✅ CMS has ${gamesCount.count} games`);
+  // Run name sync for existing games
+  setTimeout(() => syncGameNamesOnce(), 1000);
 }
 
 const app = express();
@@ -249,8 +331,8 @@ const createFallbackData = () => {
   };
 };
 
-// Main fetch function with concurrent requests
-const fetchAllData = async () => {
+// Fetch data from Roblox APIs and update cache (does NOT save to database)
+const fetchAndCache = async () => {
   try {
     console.log("🔄 Fetching all Roblox data...");
 
@@ -346,19 +428,12 @@ const fetchAllData = async () => {
       totalMembers,
     };
 
-    // Save to SQLite database
-    try {
-      db.insertLog(logData);
-      console.log("✅ Log saved to SQLite and cache updated.");
-    } catch (dbError) {
-      console.warn("⚠️ Database save failed:", dbError.message);
-    }
-
     // Add timestamp for response
     logData.timestamp = new Date().toISOString();
 
     // Update cache
     setCachedData(logData);
+    console.log("✅ Cache updated (no database save).");
 
     return logData;
   } catch (error) {
@@ -367,24 +442,76 @@ const fetchAllData = async () => {
     // Use fallback data when all APIs fail
     const fallbackData = createFallbackData();
     setCachedData(fallbackData);
-
-    try {
-      db.insertLog(fallbackData);
-      console.log("✅ Fallback data saved to SQLite.");
-    } catch (dbError) {
-      console.warn("⚠️ Fallback database save failed:", dbError.message);
-    }
+    console.log("⚠️ Using fallback data for cache.");
 
     return fallbackData;
   }
 };
 
+// Save current cached data to database (called once per day)
+const saveToDatabase = async () => {
+  try {
+    const dataToSave = getCachedData();
+
+    if (!dataToSave) {
+      console.warn("⚠️ No cached data available to save to database.");
+      return;
+    }
+
+    // Update timestamp to current time for the log entry
+    dataToSave.timestamp = new Date();
+
+    db.insertLog(dataToSave);
+    console.log("💾 Daily log saved to database at", new Date().toLocaleString());
+  } catch (error) {
+    console.error("❌ Database save failed:", error.message);
+  }
+};
+
+// ============================================
+// SCHEDULING CONFIGURATION
+// ============================================
+// You can configure how often data is fetched and logged here:
+//
+// FETCH INTERVAL: How often to fetch fresh data from Roblox APIs
+//   - Default: Every 15 minutes (15 * 60 * 1000 milliseconds)
+//   - Adjust the interval below if you want more/less frequent updates
+//
+// DATABASE LOGGING: How often to save logs to the database
+//   - Default: Once per day at midnight (cron: '0 0 * * *')
+//   - Cron format: 'minute hour day month weekday'
+//   - Examples:
+//     * '0 0 * * *'   = Every day at midnight
+//     * '0 12 * * *'  = Every day at noon
+//     * '0 */6 * * *' = Every 6 hours
+//     * '0 0 * * 0'   = Every Sunday at midnight
+//
+// TIMEZONE: Set your timezone for the cron schedule
+//   - Default: "America/Toronto"
+//   - Common options: "America/New_York", "America/Los_Angeles", "UTC"
+// ============================================
+
 // Initial fetch with delay to prevent cold start issues
 setTimeout(() => {
-  fetchAllData();
+  fetchAndCache();
+  // Also save to database on startup
+  setTimeout(() => saveToDatabase(), 10000); // Save 10 seconds after initial fetch
 }, 5000); // 5 second delay for Render cold starts
 
-setInterval(fetchAllData, 15 * 60 * 1000); // every 15 minutes
+// Fetch and update cache every 15 minutes
+const FETCH_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
+setInterval(fetchAndCache, FETCH_INTERVAL_MS);
+
+// Save to database once per day at midnight (00:00)
+const DB_LOG_SCHEDULE = '0 0 * * *'; // Midnight every day
+const TIMEZONE = "America/Toronto"; // Adjust to your timezone
+
+cron.schedule(DB_LOG_SCHEDULE, async () => {
+  console.log('🌙 Scheduled database save triggered at', new Date().toLocaleString());
+  await saveToDatabase();
+}, {
+  timezone: TIMEZONE
+});
 
 // Error handling middleware
 const asyncHandler = (fn) => (req, res, next) => {
@@ -500,7 +627,10 @@ app.get("/proxy/all", asyncHandler(async (_, res) => {
 }));
 
 app.post("/proxy/refresh", asyncHandler(async (_, res) => {
-  const data = await fetchAllData();
+  const data = await fetchAndCache();
+  // Also save to database so landing page gets updated immediately
+  db.insertLog(data);
+  console.log("💾 Saved refreshed data to database for landing page");
   res.json({ message: "Data refreshed successfully.", timestamp: new Date(), data });
 }));
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { RefreshCw } from 'lucide-react';
 import DetailedLineChart from './charts/DetailedLineChart';
@@ -104,6 +104,45 @@ const DetailedGames = () => {
     activeGames: allGamesStats.filter(g => g.playing > 0).length
   };
 
+  // Calculate game-specific KPIs
+  const getGameSpecificKPIs = () => {
+    if (selectedGame === 'all') return null;
+
+    // Find the current game from all games stats
+    // API returns games with 'id' property
+    const gameStats = allGamesStats.find(g => g.id === parseInt(selectedGame));
+
+    // Calculate peak and average from chart data
+    let peakPlaying = 0;
+    let avgPlaying = 0;
+    let peakVisits = 0;
+
+    if (chartData && chartData.length > 0) {
+      const playingValues = chartData.map(d => d.playing || 0).filter(v => v > 0);
+      const visitValues = chartData.map(d => d.visits || 0);
+
+      if (playingValues.length > 0) {
+        peakPlaying = Math.max(...playingValues);
+        avgPlaying = Math.round(playingValues.reduce((sum, v) => sum + v, 0) / playingValues.length);
+      }
+      if (visitValues.length > 0) {
+        peakVisits = Math.max(...visitValues);
+      }
+    }
+
+    return {
+      currentPlaying: gameStats?.playing || 0,
+      totalVisits: gameStats?.visits || 0,
+      favorites: gameStats?.favorites || 0,
+      likes: gameStats?.likes || 0,
+      peakPlaying: peakPlaying,
+      avgPlaying: avgPlaying,
+      peakVisits: peakVisits
+    };
+  };
+
+  const gameKPIs = getGameSpecificKPIs();
+
   const metricLabels = {
     playing: 'Current Players vs Time',
     visits: 'Total Visits vs Time',
@@ -116,7 +155,12 @@ const DetailedGames = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white">Games Analytics</h1>
-          <p className="text-white/50 mt-1">Comprehensive analytics and KPI tracking for all games</p>
+          <p className="text-white/50 mt-1">
+            {selectedGame === 'all'
+              ? 'Comprehensive analytics and KPI tracking for all games'
+              : `Detailed analytics for ${gamesList.find(g => g.id === parseInt(selectedGame))?.name || 'selected game'}`
+            }
+          </p>
         </div>
         <Button onClick={handleRefresh} className="bg-white text-black">
           <RefreshCw className="w-4 h-4 mr-2" />
@@ -126,11 +170,11 @@ const DetailedGames = () => {
 
     {/* Chart */}
       {loading ? (
-        <div className="flex items-center justify-center h-64 text-white bg-neutral-900 rounded-lg">
+        <div className="flex items-center justify-center h-64 text-white bg-neutral-950 border border-neutral-900 rounded-lg">
           <div className="text-lg">Loading chart data...</div>
         </div>
       ) : (
-        <div className="bg-neutral-900 p-6 rounded-lg">
+        <div className="bg-neutral-950 border border-neutral-900 p-6 rounded-lg">
           <h2 className="text-xl font-bold text-white mb-4">
             {selectedGame === 'all'
               ? `Overall ${metricLabels[metric]} (All Games)`
@@ -143,39 +187,77 @@ const DetailedGames = () => {
           />
         </div>
       )}
-      {/* Overall KPIs */}
-      <div className="bg-neutral-900 p-6 rounded-lg">
-        <h2 className="text-xl font-bold text-white mb-4">Overall KPIs</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <div className="bg-black p-4 rounded-lg">
-            <div className="text-sm text-white/50 mb-1">Total Playing</div>
-            <div className="text-2xl font-bold text-white">{overallKPIs.totalPlaying.toLocaleString()}</div>
+      {/* KPIs Section - Switches between Overall and Game-Specific */}
+      <div className="bg-neutral-950 border border-neutral-900 p-6 rounded-lg">
+        <h2 className="text-xl font-bold text-white mb-4">
+          {selectedGame === 'all' ? 'Overall KPIs' : `${gamesList.find(g => g.id === parseInt(selectedGame))?.name || 'Game'} KPIs`}
+        </h2>
+
+        {selectedGame === 'all' ? (
+          // Overall KPIs
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="bg-black p-4 rounded-lg">
+              <div className="text-sm text-white/50 mb-1">Total Playing</div>
+              <div className="text-2xl font-bold text-white">{overallKPIs.totalPlaying.toLocaleString()}</div>
+            </div>
+            <div className="bg-black p-4 rounded-lg">
+              <div className="text-sm text-white/50 mb-1">Total Visits</div>
+              <div className="text-2xl font-bold text-white">{overallKPIs.totalVisits.toLocaleString()}</div>
+            </div>
+            <div className="bg-black p-4 rounded-lg">
+              <div className="text-sm text-white/50 mb-1">Total Favorites</div>
+              <div className="text-2xl font-bold text-white">{overallKPIs.totalFavorites.toLocaleString()}</div>
+            </div>
+            <div className="bg-black p-4 rounded-lg">
+              <div className="text-sm text-white/50 mb-1">Total Likes</div>
+              <div className="text-2xl font-bold text-white">{overallKPIs.totalLikes.toLocaleString()}</div>
+            </div>
+            <div className="bg-black p-4 rounded-lg">
+              <div className="text-sm text-white/50 mb-1">Avg Playing</div>
+              <div className="text-2xl font-bold text-white">{overallKPIs.avgPlaying.toLocaleString()}</div>
+            </div>
+            <div className="bg-black p-4 rounded-lg">
+              <div className="text-sm text-white/50 mb-1">Active Games</div>
+              <div className="text-2xl font-bold text-white">{overallKPIs.activeGames}</div>
+            </div>
           </div>
-          <div className="bg-black p-4 rounded-lg">
-            <div className="text-sm text-white/50 mb-1">Total Visits</div>
-            <div className="text-2xl font-bold text-white">{overallKPIs.totalVisits.toLocaleString()}</div>
+        ) : gameKPIs ? (
+          // Game-Specific KPIs
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <div className="bg-black p-4 rounded-lg">
+              <div className="text-sm text-white/50 mb-1">Current Playing</div>
+              <div className="text-2xl font-bold text-white">{gameKPIs.currentPlaying.toLocaleString()}</div>
+            </div>
+            <div className="bg-black p-4 rounded-lg">
+              <div className="text-sm text-white/50 mb-1">Peak Playing</div>
+              <div className="text-2xl font-bold text-white">{gameKPIs.peakPlaying.toLocaleString()}</div>
+            </div>
+            <div className="bg-black p-4 rounded-lg">
+              <div className="text-sm text-white/50 mb-1">Avg Playing</div>
+              <div className="text-2xl font-bold text-white">{gameKPIs.avgPlaying.toLocaleString()}</div>
+            </div>
+            <div className="bg-black p-4 rounded-lg">
+              <div className="text-sm text-white/50 mb-1">Total Visits</div>
+              <div className="text-2xl font-bold text-white">{gameKPIs.totalVisits.toLocaleString()}</div>
+            </div>
+            <div className="bg-black p-4 rounded-lg">
+              <div className="text-sm text-white/50 mb-1">Favorites</div>
+              <div className="text-2xl font-bold text-white">{gameKPIs.favorites.toLocaleString()}</div>
+            </div>
+            <div className="bg-black p-4 rounded-lg">
+              <div className="text-sm text-white/50 mb-1">Likes</div>
+              <div className="text-2xl font-bold text-white">{gameKPIs.likes.toLocaleString()}</div>
+            </div>
           </div>
-          <div className="bg-black p-4 rounded-lg">
-            <div className="text-sm text-white/50 mb-1">Total Favorites</div>
-            <div className="text-2xl font-bold text-white">{overallKPIs.totalFavorites.toLocaleString()}</div>
+        ) : (
+          <div className="text-white/50 text-center py-4">
+            Loading game statistics...
           </div>
-          <div className="bg-black p-4 rounded-lg">
-            <div className="text-sm text-white/50 mb-1">Total Likes</div>
-            <div className="text-2xl font-bold text-white">{overallKPIs.totalLikes.toLocaleString()}</div>
-          </div>
-          <div className="bg-black p-4 rounded-lg">
-            <div className="text-sm text-white/50 mb-1">Avg Playing</div>
-            <div className="text-2xl font-bold text-white">{overallKPIs.avgPlaying.toLocaleString()}</div>
-          </div>
-          <div className="bg-black p-4 rounded-lg">
-            <div className="text-sm text-white/50 mb-1">Active Games</div>
-            <div className="text-2xl font-bold text-white">{overallKPIs.activeGames}</div>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Game Selection & Controls */}
-      <div className="bg-neutral-900 p-6 rounded-lg">
+      <div className="bg-neutral-950 border border-neutral-900 p-6 rounded-lg">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Game Selector */}
           <div>

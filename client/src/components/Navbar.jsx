@@ -41,6 +41,10 @@ const Navbar = () => {
             "transition-all duration-700 ease-out",
             inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
           ].join(" ")}
+          style={{
+            willChange: !hasAnimated ? 'opacity, transform' : 'auto',
+            transform: 'translateZ(0)',
+          }}
           aria-label="Go home"
         >
           <img

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, Navigate } from 'react-router-dom';
 import { useAdmin } from '../../context/AdminContext';
 import {
@@ -19,6 +19,24 @@ const AdminLayout = () => {
   const { user, loading, logout } = useAdmin();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const mainRef = React.useRef(null);
+
+  // Trigger smooth fade-in animation and scroll to top on route change
+  useEffect(() => {
+    setIsTransitioning(true);
+
+    // Smooth scroll to top
+    if (mainRef.current) {
+      mainRef.current.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+
+    const timer = setTimeout(() => setIsTransitioning(false), 20);
+    return () => clearTimeout(timer);
+  }, [location.pathname]);
 
   if (loading) {
     return (
@@ -57,6 +75,10 @@ const AdminLayout = () => {
           lg:translate-x-0 lg:static lg:inset-auto
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
+        style={{
+          willChange: sidebarOpen ? 'transform' : 'auto',
+          transform: 'translateZ(0)'
+        }}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
@@ -84,13 +106,17 @@ const AdminLayout = () => {
                   onClick={() => setSidebarOpen(false)}
                   className={`
                     flex items-center gap-3 px-4 py-3 rounded-lg
-                    transition-colors duration-150
+                    transition-all duration-200 ease-out
                     ${
                       isActive
-                        ? 'bg-neutral-900 text-white font-medium'
-                        : 'text-white'
+                        ? 'bg-neutral-950 border border-neutral-900 text-white font-medium'
+                        : 'text-white hover:bg-neutral-950/50'
                     }
                   `}
+                  style={{
+                    willChange: 'background-color, border-color',
+                    transform: 'translateZ(0)'
+                  }}
                 >
                   <Icon className="w-5 h-5" />
                   <span>{item.label}</span>
@@ -146,8 +172,26 @@ const AdminLayout = () => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-6 bg-black">
-          <Outlet />
+        <main
+          ref={mainRef}
+          className="flex-1 overflow-y-auto p-6 bg-black"
+          style={{
+            transform: 'translateZ(0)',
+            contain: 'layout style',
+            scrollBehavior: 'smooth'
+          }}
+        >
+          <div
+            className={`transition-all duration-300 ease-out ${
+              isTransitioning ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'
+            }`}
+            style={{
+              willChange: isTransitioning ? 'opacity, transform' : 'auto',
+              transform: 'translateZ(0)'
+            }}
+          >
+            <Outlet />
+          </div>
         </main>
       </div>
 

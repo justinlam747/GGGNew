@@ -10,12 +10,13 @@ const FeaturedGames = () => {
     : [];
 
   return (
-    <div className="relative">
-      {/* Vignette overlay */}
+    <div className="relative" style={{ contain: 'layout style' }}>
+      {/* Vignette overlay - GPU accelerated */}
       <div
         className="pointer-events-none absolute inset-0 z-10"
         style={{
-          background: 'radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.4) 70%, rgba(0,0,0,0.8) 100%)'
+          background: 'radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.4) 70%, rgba(0,0,0,0.8) 100%)',
+          transform: 'translateZ(0)',
         }}
       />
 

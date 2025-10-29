@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Edit2, Trash2, Star, Eye, EyeOff, RefreshCw } from 'lucide-react';
+import { Plus, Edit2, Trash2 } from 'lucide-react';
 import { Button } from '../../ui/button';
 import { useGameData } from '../../../context/GameContext';
 import { getApiBaseUrl } from '../../../utils/api';
@@ -10,7 +10,6 @@ const GamesManager = () => {
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingGame, setEditingGame] = useState(null);
-  const [refreshing, setRefreshing] = useState(false);
 
   // Get refetch function from GameContext
   const { refetch } = useGameData();
@@ -43,7 +42,9 @@ const GamesManager = () => {
       });
       fetchGames();
       setShowAddModal(false);
-      // Auto-refresh landing page data
+      // Trigger server-side data refresh from Roblox
+      await axios.post(`${API_BASE}/proxy/refresh`, {}, { withCredentials: true });
+      // Also refetch landing page data
       refetch();
       console.log('✅ Landing page data refreshed after adding game');
     } catch (error) {
@@ -59,7 +60,9 @@ const GamesManager = () => {
       });
       fetchGames();
       setEditingGame(null);
-      // Auto-refresh landing page data
+      // Trigger server-side data refresh from Roblox
+      await axios.post(`${API_BASE}/proxy/refresh`, {}, { withCredentials: true });
+      // Also refetch landing page data
       refetch();
       console.log('✅ Landing page data refreshed after updating game');
     } catch (error) {
@@ -76,7 +79,9 @@ const GamesManager = () => {
         withCredentials: true
       });
       fetchGames();
-      // Auto-refresh landing page data
+      // Trigger server-side data refresh from Roblox
+      await axios.post(`${API_BASE}/proxy/refresh`, {}, { withCredentials: true });
+      // Also refetch landing page data
       refetch();
       console.log('✅ Landing page data refreshed after deleting game');
     } catch (error) {
@@ -87,26 +92,6 @@ const GamesManager = () => {
 
   const toggleActive = (game) => {
     handleUpdateGame(game.id, { is_active: !game.is_active });
-  };
-
-  const toggleFeatured = (game) => {
-    handleUpdateGame(game.id, { is_featured: !game.is_featured });
-  };
-
-  const handleRefreshData = async () => {
-    try {
-      setRefreshing(true);
-      console.log('🔄 Triggering data refresh from CMS...');
-      await axios.post(`${API_BASE}/proxy/refresh`, {}, { withCredentials: true });
-      // Also refetch landing page data
-      refetch();
-      alert('✅ Data refreshed! Landing page will show updated games.');
-    } catch (error) {
-      console.error('Error refreshing data:', error);
-      alert('❌ Failed to refresh data: ' + (error.response?.data?.message || error.message));
-    } finally {
-      setRefreshing(false);
-    }
   };
 
   if (loading) {
@@ -124,45 +109,33 @@ const GamesManager = () => {
         <div>
           <h2 className="text-2xl font-bold text-white">Games</h2>
           <p className="text-white/50 text-sm">
-            {games.length} total games • Toggle active/inactive to show/hide on landing page
+            {games.length} total games • Changes auto-sync to landing page
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button
-            onClick={handleRefreshData}
-            disabled={refreshing}
-            className="bg-neutral-800 text-white hover:bg-neutral-700"
-          >
-            <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-            {refreshing ? 'Refreshing...' : 'Refresh Landing Page'}
-          </Button>
-          <Button
-            onClick={() => setShowAddModal(true)}
-            className="bg-white text-black"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Game
-          </Button>
-        </div>
+        <Button
+          onClick={() => setShowAddModal(true)}
+          className="bg-white text-black"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add Game
+        </Button>
       </div>
 
       {/* Games Table */}
-      <div className="bg-neutral-900 rounded-lg overflow-hidden">
+      <div className="bg-neutral-950 border border-neutral-900 rounded-lg overflow-hidden">
         <table className="w-full">
           <thead>
             <tr className="border-b border-white/10">
               <th className="text-left p-4 text-white font-medium">Game</th>
               <th className="text-left p-4 text-white font-medium">Universe ID</th>
-              <th className="text-center p-4 text-white font-medium">Order</th>
               <th className="text-center p-4 text-white font-medium">Status</th>
-              <th className="text-center p-4 text-white font-medium">Featured</th>
               <th className="text-right p-4 text-white font-medium">Actions</th>
             </tr>
           </thead>
           <tbody>
             {games.length === 0 ? (
               <tr>
-                <td colSpan="6" className="text-center p-8 text-white/50">
+                <td colSpan="4" className="text-center p-8 text-white/50">
                   No games found. Add your first game to get started.
                 </td>
               </tr>
@@ -170,15 +143,9 @@ const GamesManager = () => {
               games.map(game => (
                 <tr key={game.id} className="border-b border-white/10 hover:bg-white/5">
                   <td className="p-4">
-                    <div>
-                      <div className="text-white font-medium">{game.name}</div>
-                      {game.description && (
-                        <div className="text-white/50 text-sm">{game.description}</div>
-                      )}
-                    </div>
+                    <div className="text-white font-medium">{game.name}</div>
                   </td>
                   <td className="p-4 text-white/75">{game.universe_id}</td>
-                  <td className="p-4 text-center text-white/75">{game.display_order}</td>
                   <td className="p-4 text-center">
                     <button
                       onClick={() => toggleActive(game)}
@@ -189,16 +156,6 @@ const GamesManager = () => {
                       }`}
                     >
                       {game.is_active ? 'Active' : 'Inactive'}
-                    </button>
-                  </td>
-                  <td className="p-4 text-center">
-                    <button
-                      onClick={() => toggleFeatured(game)}
-                      className="text-white/50 hover:text-yellow-500 transition-colors"
-                    >
-                      <Star
-                        className={`w-5 h-5 ${game.is_featured ? 'fill-yellow-500 text-yellow-500' : ''}`}
-                      />
                     </button>
                   </td>
                   <td className="p-4">
@@ -244,11 +201,44 @@ const GameModal = ({ game, onClose, onSave }) => {
   const [formData, setFormData] = useState({
     universe_id: game?.universe_id || '',
     name: game?.name || '',
-    description: game?.description || '',
-    display_order: game?.display_order || 0,
-    is_featured: game?.is_featured || false,
     thumbnail_url: game?.thumbnail_url || ''
   });
+  const [fetching, setFetching] = useState(false);
+  const [fetchError, setFetchError] = useState('');
+
+  const API_BASE = getApiBaseUrl();
+
+  // Auto-fetch game name when universe ID is entered
+  const handleUniverseIdChange = async (universeId) => {
+    setFormData({ ...formData, universe_id: universeId });
+    setFetchError('');
+
+    // Auto-fetch game data for any universe ID entry
+    if (universeId && universeId.length > 0) {
+      try {
+        setFetching(true);
+        // Use proxy endpoint to avoid CORS issues
+        const response = await axios.get(`${API_BASE}/api/cms/proxy/game-info/${universeId}`, {
+          withCredentials: true
+        });
+        const gameData = response.data.data;
+
+        if (gameData) {
+          setFormData(prev => ({
+            ...prev,
+            name: gameData.name || ''
+          }));
+        } else {
+          setFetchError('Game not found. Please check the Universe ID.');
+        }
+      } catch (error) {
+        console.error('Error fetching game data:', error);
+        setFetchError('Failed to fetch game data.');
+      } finally {
+        setFetching(false);
+      }
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -261,7 +251,7 @@ const GameModal = ({ game, onClose, onSave }) => {
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-      <div className="bg-neutral-900 p-8 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-neutral-950 border border-neutral-900 p-8 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <h2 className="text-2xl font-bold text-white mb-6">
           {game ? 'Edit Game' : 'Add Game'}
         </h2>
@@ -274,74 +264,31 @@ const GameModal = ({ game, onClose, onSave }) => {
             <input
               type="number"
               value={formData.universe_id}
-              onChange={(e) => setFormData({ ...formData, universe_id: e.target.value })}
+              onChange={(e) => handleUniverseIdChange(e.target.value)}
               className="w-full bg-black text-white border border-white/20 rounded p-2"
               required
-              disabled={!!game}
+              disabled={fetching}
             />
+            {fetching && (
+              <p className="text-blue-400 text-sm mt-1">Fetching game data...</p>
+            )}
+            {fetchError && (
+              <p className="text-red-400 text-sm mt-1">{fetchError}</p>
+            )}
           </div>
 
-          <div>
-            <label className="block text-white text-sm font-medium mb-2">
-              Game Name *
-            </label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full bg-black text-white border border-white/20 rounded p-2"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-white text-sm font-medium mb-2">
-              Description
-            </label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full bg-black text-white border border-white/20 rounded p-2"
-              rows="3"
-            />
-          </div>
-
-          <div>
-            <label className="block text-white text-sm font-medium mb-2">
-              Display Order
-            </label>
-            <input
-              type="number"
-              value={formData.display_order}
-              onChange={(e) => setFormData({ ...formData, display_order: parseInt(e.target.value) })}
-              className="w-full bg-black text-white border border-white/20 rounded p-2"
-            />
-          </div>
-
-          <div>
-            <label className="block text-white text-sm font-medium mb-2">
-              Thumbnail URL
-            </label>
-            <input
-              type="text"
-              value={formData.thumbnail_url}
-              onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })}
-              className="w-full bg-black text-white border border-white/20 rounded p-2"
-            />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={formData.is_featured}
-              onChange={(e) => setFormData({ ...formData, is_featured: e.target.checked })}
-              className="w-4 h-4"
-            />
-            <label className="text-white text-sm">Featured on homepage</label>
-          </div>
+          {formData.name && (
+            <div className="bg-green-500/10 border border-green-500/20 rounded p-3">
+              <p className="text-green-400 text-sm font-medium">{game ? 'Current Game' : 'Game Found!'}</p>
+              <p className="text-white mt-1">{formData.name}</p>
+              {game && (
+                <p className="text-white/50 text-xs mt-1">Change the Universe ID above to update this game</p>
+              )}
+            </div>
+          )}
 
           <div className="flex gap-3 pt-4">
-            <Button type="submit" className="bg-white text-black flex-1">
+            <Button type="submit" className="bg-white text-black flex-1" disabled={fetching || (!game && !formData.name)}>
               {game ? 'Update' : 'Add'} Game
             </Button>
             <Button

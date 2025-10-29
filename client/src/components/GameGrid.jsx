@@ -13,20 +13,25 @@ const GameGrid = memo(({ data }) => {
   return (
     <section
       id="games"
-      className="relative min-h-screen  text-white py-16"
+      className="relative min-h-screen text-white py-16"
+      style={{ contain: 'layout style paint' }}
     >
-      {/* soft center spotlight */}
-      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+      {/* soft center spotlight - GPU accelerated */}
+      <div
+        className="pointer-events-none absolute inset-0 flex items-center justify-center"
+        style={{ transform: 'translateZ(0)' }}
+      >
         <div className="size-[80vmin] rounded-full opacity-[0.12] blur-3xl bg-[radial-gradient(closest-side,rgba(255,255,255,0.9),rgba(255,255,255,0))]" />
       </div>
 
-      {/* subtle film grain */}
+      {/* subtle film grain - GPU accelerated */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.05] mix-blend-screen"
         style={{
           backgroundImage:
             "url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22160%22 height=%22160%22 viewBox=%220 0 160 160%22><filter id=%22n%22><feTurbulence type=%22fractalNoise%22 baseFrequency=%220.8%22 numOctaves=%222%22 stitchTiles=%22stitch%22/></filter><rect width=%22160%22 height=%22160%22 filter=%22url(%23n)%22 opacity=%220.35%22/></svg>')",
           backgroundSize: "160px 160px",
+          transform: 'translateZ(0)',
         }}
       />
 
@@ -68,21 +73,30 @@ const GameCard = memo(({ image, title, visits, players, rootPlaceId }) => {
         "group relative overflow-hidden rounded-3xl block",
         "cursor-pointer",
         // glossy dark bento shell
-       
+
         "ring-1 ring-white/5 shadow-[0_10px_30px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.04)]",
         "before:content-[''] before:absolute before:inset-0 before:rounded-3xl before:pointer-events-none",
         "before:bg-[radial-gradient(60%_60%_at_50%_40%,rgba(255,255,255,0.07),transparent_65%)]",
         "transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.06)]",
       ].join(" ")}
+      style={{
+        willChange: 'transform',
+        transform: 'translateZ(0)',
+        contain: 'paint',
+      }}
     >
       {/* image */}
-      <div className="relative h-56 md:h-60 lg:h-96 overflow-hidden">
+      <div
+        className="relative h-56 md:h-60 lg:h-96 overflow-hidden"
+        style={{ contain: 'paint' }}
+      >
         <img
           src={image}
           alt={title}
-          className="h-full rounded-t-3xl w-full object-cover transition-transform duration-500 will-change-transform group-hover:scale-105"
+          className="h-full rounded-t-3xl w-full object-cover transition-transform duration-500 group-hover:scale-105"
           loading="lazy"
           decoding="async"
+          style={{ willChange: 'transform' }}
         />
 
       
