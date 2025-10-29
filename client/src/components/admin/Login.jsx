@@ -45,24 +45,33 @@ const Login = () => {
       <div className="w-full max-w-md bg-black p-2">
         <div className="space-y-6">
           <div className="flex flex-col items-center space-y-4">
-            <div className="p-4 bg-black">
+            <div className="p-4 bg-black relative">
               <img
                 src={ggg}
                 alt="Glazing Gorilla Games Logo"
-                className="h-32 "
+                className="h-32 relative z-10"
+                style={{
+                  filter: 'drop-shadow(0 0 30px rgba(255,255,255,0.6)) drop-shadow(0 0 60px rgba(255,255,255,0.4))',
+                  transform: 'translateZ(0)',
+                  willChange: 'auto'
+                }}
+              />
+              <div
+                className="pointer-events-none absolute top-1/2 left-1/2 w-64 h-64 bg-white/15 rounded-full blur-[60px] -z-10"
+                style={{ transform: 'translate(-50%, -50%) translateZ(0)', willChange: 'auto' }}
               />
             </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username" className="text-white">
+              {/* <Label htmlFor="username" className="text-white">
                 User
-              </Label>
+              </Label> */}
               <Input
                 id="username"
                 type="text"
-                placeholder="Enter username"
+                placeholder="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
@@ -71,13 +80,13 @@ const Login = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-white">
+              {/* <Label htmlFor="password" className="text-white">
                 Password
-              </Label>
+              </Label> */}
               <Input
                 id="password"
                 type="password"
-                placeholder="Enter password"
+                placeholder="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -90,15 +99,13 @@ const Login = () => {
             )}
             <Button
               type="submit"
-              className="w-full bg-white text-black"
+              className="w-full rounded-md border border-neutral-900 bg-neutral-950 text-white "
               disabled={isSubmitting}
             >
               {isSubmitting ? "Logging in..." : "Login"}
             </Button>
           </form>
-          <div className="mt-4 text-xs text-center text-white/50">
-            Default credentials: admin / admin123
-          </div>
+          
         </div>
       </div>
     </div>
