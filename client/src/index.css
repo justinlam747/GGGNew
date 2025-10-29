@@ -64,30 +64,3 @@ video {
     background-size: 50% 100%;
   }
 }
-
-/* Infinite carousel animation */
-@keyframes carousel-scroll {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-33.333%);
-  }
-}
-
-.carousel-track {
-  display: flex;
-  animation: carousel-scroll 20s linear infinite;
-  will-change: transform;
-}
-
-.carousel-track:hover {
-  animation-play-state: paused;
-}
-
-/* Respect reduced motion preferences */
-@media (prefers-reduced-motion: reduce) {
-  .carousel-track {
-    animation: none;
-  }
-}

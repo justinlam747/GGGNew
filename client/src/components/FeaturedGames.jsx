@@ -1,5 +1,10 @@
 import { memo } from "react";
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay } from 'swiper/modules';
 import { useGameData } from "../context/GameContext.jsx";
+
+// Import Swiper styles
+import 'swiper/css';
 
 const FeaturedGames = () => {
   const { gameData, gameImages, loading } = useGameData();
@@ -11,9 +16,6 @@ const FeaturedGames = () => {
 
   // Get all games
   const allGames = gameData || [];
-
-  // Duplicate the games array to create seamless infinite scroll
-  const duplicatedGames = [...allGames, ...allGames, ...allGames];
 
   if (loading || !gameData) {
     return (
@@ -41,29 +43,44 @@ const FeaturedGames = () => {
         }}
       />
 
-      {/* Carousel Container - Only show 3 cards at a time */}
-      <div className="relative mx-auto" style={{ maxWidth: '1080px' }}>
-        {/* Gradient fade on left */}
-        <div className="absolute left-0 top-0 bottom-0 w-20 md:w-32 bg-gradient-to-r from-black to-transparent z-10 pointer-events-none" />
-
-        {/* Gradient fade on right */}
-        <div className="absolute right-0 top-0 bottom-0 w-20 md:w-32 bg-gradient-to-l from-black to-transparent z-10 pointer-events-none" />
-
-        {/* Scrolling wrapper */}
-        <div className="overflow-hidden w-full">
-          <div className="carousel-track gap-6 px-6">
-            {duplicatedGames.map((game, index) => (
+      {/* Swiper Carousel */}
+      <div className="relative">
+        <Swiper
+          modules={[Autoplay]}
+          spaceBetween={24}
+          slidesPerView={1}
+          centeredSlides={true}
+          loop={true}
+          speed={1000}
+          autoplay={{
+            delay: 3000,
+            disableOnInteraction: false,
+            pauseOnMouseEnter: true,
+          }}
+          breakpoints={{
+            640: {
+              slidesPerView: 2,
+              centeredSlides: false,
+            },
+            1024: {
+              slidesPerView: 3,
+              centeredSlides: false,
+            },
+          }}
+          className="featured-swiper"
+        >
+          {allGames.map((game) => (
+            <SwiperSlide key={game.universeId}>
               <GameCard
-                key={`${game.universeId}-${index}`}
                 image={getImageForGame(game.universeId)}
                 title={game.name}
                 visits={game.visits?.toLocaleString() ?? "N/A"}
                 players={game.playing?.toLocaleString() ?? "N/A"}
                 rootPlaceId={game.rootPlaceId}
               />
-            ))}
-          </div>
-        </div>
+            </SwiperSlide>
+          ))}
+        </Swiper>
       </div>
     </section>
   );
@@ -79,7 +96,7 @@ const GameCard = memo(({ image, title, visits, players, rootPlaceId }) => {
       href={gameUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="group relative overflow-hidden rounded-3xl block flex-shrink-0 w-80 ring-1 ring-white/5 shadow-[0_10px_30px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.04)] before:content-[''] before:absolute before:inset-0 before:rounded-3xl before:pointer-events-none before:bg-[radial-gradient(60%_60%_at_50%_40%,rgba(255,255,255,0.07),transparent_65%)] transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.06)]"
+      className="group relative overflow-hidden rounded-3xl block w-full ring-1 ring-white/5 shadow-[0_10px_30px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.04)] before:content-[''] before:absolute before:inset-0 before:rounded-3xl before:pointer-events-none before:bg-[radial-gradient(60%_60%_at_50%_40%,rgba(255,255,255,0.07),transparent_65%)] transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.06)]"
     >
       {/* Image */}
       <div className="relative h-56 overflow-hidden">
