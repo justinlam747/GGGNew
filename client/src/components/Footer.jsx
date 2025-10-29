@@ -1,5 +1,5 @@
 import React from "react";
-import { Music2, Instagram, Youtube } from "lucide-react";
+import { FaTiktok, FaYoutube, FaInstagram } from "react-icons/fa";
 import logo from "../assets/ggg.svg";
 import C1 from "../assets/C1.png";
 
@@ -64,7 +64,7 @@ const Footer = () => {
                     className="hover:text-white flex items-center justify-center sm:justify-start gap-2 transition-colors duration-200"
                     style={{ textShadow: '0 0 15px rgba(255,255,255,0.4)', willChange: 'auto' }}
                   >
-                    <Music2 size={18} /> Tiktok
+                    <FaTiktok size={18} /> Tiktok
                   </a>
                 </li>
                 <li>
@@ -75,7 +75,7 @@ const Footer = () => {
                     className="hover:text-white flex items-center justify-center sm:justify-start gap-2 transition-colors duration-200"
                     style={{ textShadow: '0 0 15px rgba(255,255,255,0.4)', willChange: 'auto' }}
                   >
-                    <Instagram size={18} /> Instagram
+                    <FaInstagram size={18} /> Instagram
                   </a>
                 </li>
 
@@ -87,7 +87,7 @@ const Footer = () => {
                     className="hover:text-white flex items-center justify-center sm:justify-start gap-2 transition-colors duration-200"
                     style={{ textShadow: '0 0 15px rgba(255,255,255,0.4)', willChange: 'auto' }}
                   >
-                    <Youtube size={18} /> YouTube
+                    <FaYoutube size={18} /> YouTube
                   </a>
                 </li>
               </ul>
