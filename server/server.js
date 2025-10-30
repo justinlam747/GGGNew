@@ -492,10 +492,12 @@ const saveToDatabase = async () => {
 // ============================================
 
 // Initial fetch with delay to prevent cold start issues
-setTimeout(() => {
-  fetchAndCache();
-  // Also save to database on startup
-  setTimeout(() => saveToDatabase(), 10000); // Save 10 seconds after initial fetch
+setTimeout(async () => {
+  console.log('🚀 Starting initial data fetch...');
+  await fetchAndCache();
+  // Save to database immediately after first fetch
+  await saveToDatabase();
+  console.log('✅ Initial data fetch and save complete');
 }, 5000); // 5 second delay for Render cold starts
 
 // Fetch and update cache every 15 minutes
