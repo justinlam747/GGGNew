@@ -172,9 +172,13 @@ app.use(cors({
     if (!origin) return callback(null, true);
 
     // Check if origin is in allowed list or matches the domain
-    if (allowedOrigins.includes(origin) || origin.startsWith('https://gggnew.onrender.com')) {
+    if (allowedOrigins.includes(origin) ||
+        origin.startsWith('https://gggnew.onrender.com') ||
+        origin.startsWith('https://glazinggorillagames.com') ||
+        origin.startsWith('https://www.glazinggorillagames.com')) {
       callback(null, true);
     } else {
+      console.warn(`⚠️ CORS blocked origin: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -668,8 +672,14 @@ app.get('*', (req, res) => {
 });
 
 // Global error handler
-app.use((err, _req, res, _next) => {
-  console.error('❌ Server error:', err.message);
+app.use((err, req, res, _next) => {
+  // Handle CORS errors specifically
+  if (err.message === 'Not allowed by CORS') {
+    console.error('❌ CORS error for origin:', req.headers.origin);
+    return res.status(403).json({ error: 'CORS policy violation' });
+  }
+
+  console.error('❌ Server error:', err.message, err.stack);
   res.status(500).json({ error: 'Internal server error' });
 });
 
