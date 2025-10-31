@@ -1,14 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 
 const Hero = ({ data, gameImages }) => {
   const navigate = useNavigate();
-  const [mounted, setMounted] = useState(false);
-
-  React.useEffect(() => {
-    const id = requestAnimationFrame(() => setMounted(true));
-    return () => cancelAnimationFrame(id);
-  }, []);
 
   return (
     <section
@@ -42,11 +36,7 @@ const Hero = ({ data, gameImages }) => {
 
       {/* content */}
       <div
-        className={[
-          "relative z-10 mx-auto flex min-h-[92vh] max-w-6xl flex-col items-center justify-center px-6 text-center transition-all duration-700",
-          mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
-        ].join(" ")}
-        style={{ willChange: mounted ? 'auto' : 'opacity, transform' }}
+        className="relative z-10 mx-auto flex min-h-[92vh] max-w-6xl flex-col items-center justify-center px-6 text-center"
       >
         {/* headline */}
         <h1 className="font-extrabold tracking-tight leading-[0.9] text-[15vw] sm:text-[12vw] md:text-[9vw] lg:text-[7.5vw]">

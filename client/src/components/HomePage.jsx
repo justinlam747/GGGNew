@@ -1,15 +1,13 @@
-import React, { Suspense, lazy } from "react";
+import React from "react";
 import { useGameData } from "../context/GameContext.jsx";
 import Navbar from "./Navbar";
 import Hero from "./Hero";
 import GameGrid from "./GameGrid";
 import FeaturedGame from "./FeaturedGames.jsx";
-import { HeroSkeleton, ShowcaseSkeleton, AboutSkeleton, GameGridSkeleton } from "./SkeletonLoader";
+import About from "./About";
+import Showcase from "./Showcase";
+import { HeroSkeleton } from "./SkeletonLoader";
 import Footer from "./Footer.jsx";
-
-// Lazy load below-the-fold components
-const About = lazy(() => import("./About"));
-const Showcase = lazy(() => import("./Showcase"));
 
 const HomePage = () => {
   const { gameData, groupData, totalData, gameImages, loading } = useGameData();
@@ -22,25 +20,25 @@ const HomePage = () => {
   return (
     <div className="bg-black w-full">
       <Navbar />
-      <Hero data={gameData} gameImages={gameImages} />
 
-      <FeaturedGame />
+      {/* Staggered fade-in sections */}
+      <div className="animate-fade-in-up" style={{ animationDelay: '0ms' }}>
+        <Hero data={gameData} gameImages={gameImages} />
+      </div>
 
-     
-     
+      <div className="animate-fade-in-up" style={{ animationDelay: '150ms' }}>
+        <FeaturedGame />
+      </div>
 
-      <Suspense fallback={<ShowcaseSkeleton />}>
+      <div className="animate-fade-in-up" style={{ animationDelay: '300ms' }}>
         <Showcase />
-      </Suspense>
+      </div>
 
-      
-
-      <Suspense fallback={<AboutSkeleton />}>
+      <div className="animate-fade-in-up" style={{ animationDelay: '450ms' }}>
         <About groupData={groupData} totalData={totalData} />
-      </Suspense>
+      </div>
 
       <Footer />
-
     </div>
   );
 };
